@@ -7,6 +7,7 @@ import 'package:prm_frontend/features/auth/domain/entities/app_user.dart';
 import 'package:prm_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:prm_frontend/features/auth/presentation/providers/auth_providers.dart';
 import 'package:prm_frontend/features/home/presentation/home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../mocks/mock_http_service.dart';
 
@@ -48,6 +49,7 @@ void main() {
   });
 
   setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     fakeAuthRepository = FakeAuthRepository()..user = testUser;
   });
 

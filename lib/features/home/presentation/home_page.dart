@@ -203,7 +203,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                             children: [
                               Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 20),
                               const SizedBox(width: 8),
-                              const Text('Failed to sync stats'),
+                              Expanded(
+                                child: Text(
+                                  'Failed to sync stats: $error',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: theme.colorScheme.error),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -381,7 +387,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 40),
                         const SizedBox(height: 12),
-                        const Text('Failed to sync statistics'),
+                        Text(
+                          'Failed to sync statistics: $error',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
                         const SizedBox(height: 12),
                         FilledButton.tonal(
                           onPressed: () => ref.read(currentUserProvider.notifier).loadUser(),
@@ -612,7 +622,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                     children: [
                       const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
                       const SizedBox(width: 8),
-                      Text('Sync failed', style: const TextStyle(fontSize: 12, color: Colors.orange)),
+                      Expanded(
+                        child: Text(
+                          'Sync failed: $error',
+                          style: const TextStyle(fontSize: 12, color: Colors.orange),
+                        ),
+                      ),
                     ],
                   ),
                 ),
