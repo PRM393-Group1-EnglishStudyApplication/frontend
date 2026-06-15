@@ -15,8 +15,8 @@ class UnitModel {
     return UnitModel(
       id: (json['_id'] ?? json['id'] ?? '') as String,
       title: (json['title'] ?? '') as String,
-      orderIndex: (json['orderIndex'] ?? json['order'] ?? 0) as int,
-      courseId: (json['courseId'] ?? '') as String,
+      orderIndex: (json['order_index'] ?? json['orderIndex'] ?? json['order'] ?? 0) as int,
+      courseId: (json['course_id'] ?? json['courseId'] ?? '').toString(),
     );
   }
 }

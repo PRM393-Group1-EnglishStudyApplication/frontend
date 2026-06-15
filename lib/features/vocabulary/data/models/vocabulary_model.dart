@@ -23,9 +23,9 @@ class VocabularyModel {
       word: (json['word'] ?? '') as String,
       meaning: (json['meaning'] ?? json['definition'] ?? '') as String,
       pronunciation: json['pronunciation'] as String?,
-      exampleSentence: (json['exampleSentence'] ?? json['example']) as String?,
-      audioUrl: json['audioUrl'] as String?,
-      imageUrl: json['imageUrl'] as String?,
+      exampleSentence: (json['example_sentence'] ?? json['exampleSentence'] ?? json['example']) as String?,
+      audioUrl: (json['audio_url'] ?? json['audioUrl']) as String?,
+      imageUrl: (json['image_url'] ?? json['imageUrl']) as String?,
     );
   }
 }

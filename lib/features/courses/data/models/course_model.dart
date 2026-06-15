@@ -16,13 +16,14 @@ class CourseModel {
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
+    final units = json['units'] as List<dynamic>?;
     return CourseModel(
       id: (json['_id'] ?? json['id'] ?? '') as String,
       title: (json['title'] ?? '') as String,
       description: (json['description'] ?? '') as String,
-      targetLevel: (json['targetLevel'] ?? '') as String,
-      imageUrl: json['imageUrl'] as String?,
-      unitCount: json['unitCount'] as int?,
+      targetLevel: (json['target_level'] ?? json['targetLevel'] ?? '') as String,
+      imageUrl: (json['image_url'] ?? json['imageUrl']) as String?,
+      unitCount: units?.length ?? json['unitCount'] as int?,
     );
   }
 }

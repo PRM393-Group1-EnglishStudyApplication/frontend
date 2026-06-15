@@ -1,9 +1,12 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../auth/presentation/providers/auth_providers.dart';
 import '../../../routes/app_routes.dart';
 
 const Color _kPrimary = Color(0xFF0055C6);
@@ -11,14 +14,49 @@ const Color _kOrange = Color(0xFFFD9D06);
 const Color _kGreen = Color(0xFF008733);
 const Color _kRed = Color(0xFFFF4B4B);
 
-class HomePage extends StatefulWidget {
+// ── Providers ──────────────────────────────────────────────────────────────
+
+/// Fetches enrolled course detail with nested units+lessons from backend.
+final _enrolledCourseProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final courseId = prefs.getString('enrolled_course_id');
+  if (courseId == null) return null;
+  final dio = ref.watch(authDioProvider);
+  final response = await dio.get<Map<String, dynamic>>('/api/courses/$courseId');
+  return response.data?['data'] as Map<String, dynamic>?;
+});
+
+/// Fetches the set of lesson IDs the current user has completed.
+final _completedLessonsProvider = FutureProvider<Set<String>>((ref) async {
+  final token = ref.watch(clerkTokenProvider);
+  if (token == null) return const {};
+  try {
+    final dio = ref.watch(authDioProvider);
+    final response = await dio.get<Map<String, dynamic>>('/api/progress/me');
+    final list = (response.data?['data'] as List<dynamic>?) ?? [];
+    final completed = <String>{};
+    for (final item in list) {
+      if (item['is_completed'] == true) {
+        final id = item['lesson_id'] as String?;
+        if (id != null && id.isNotEmpty) completed.add(id);
+      }
+    }
+    return completed;
+  } catch (_) {
+    return const {};
+  }
+});
+
+// ── Home page ──────────────────────────────────────────────────────────────
+
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixin {
   int _navIndex = 0;
 
   late final AnimationController _pulseCtrl;
@@ -148,11 +186,19 @@ class _LearnTab extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _StatPill(icon: Icons.local_fire_department_rounded, iconColor: _kOrange, value: '7'),
+              const _StatPill(
+                icon: Icons.local_fire_department_rounded,
+                iconColor: _kOrange,
+                value: '7',
+              ),
               const SizedBox(width: 8),
-              _StatPill(icon: Icons.diamond_rounded, iconColor: Color(0xFF1CB0F6), value: '320'),
+              const _StatPill(
+                icon: Icons.diamond_rounded,
+                iconColor: Color(0xFF1CB0F6),
+                value: '320',
+              ),
               const SizedBox(width: 8),
-              _StatPill(icon: Icons.favorite_rounded, iconColor: _kRed, value: '5'),
+              const _StatPill(icon: Icons.favorite_rounded, iconColor: _kRed, value: '5'),
             ],
           ),
         ),
@@ -200,54 +246,93 @@ class _StatPill extends StatelessWidget {
 
 // ── Level progress card ────────────────────────────────────────────────────
 
-class _LevelProgressCard extends StatelessWidget {
+class _LevelProgressCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final courseData = ref.watch(_enrolledCourseProvider).valueOrNull;
+    final completedIds = ref.watch(_completedLessonsProvider).valueOrNull ?? const {};
+
+    String unitLabel = 'Unit 1';
+    String unitSubtitle = 'Basics – Greetings & Numbers';
+    int completedCount = 0;
+    int totalCount = 5;
+
+    if (courseData != null) {
+      final units = courseData['units'] as List<dynamic>?;
+      if (units != null && units.isNotEmpty) {
+        final firstUnit = units.first as Map<String, dynamic>;
+        unitSubtitle = (firstUnit['title'] ?? unitSubtitle) as String;
+        final lessons = firstUnit['lessons'] as List<dynamic>? ?? [];
+        totalCount = lessons.isEmpty ? 1 : lessons.length;
+        completedCount = lessons.where((l) {
+          final id = ((l as Map<String, dynamic>)['_id'] ?? '') as String;
+          return completedIds.contains(id);
+        }).length;
+      }
+    }
+
     return GestureDetector(
       onTap: () => context.push(AppRoutes.courseList),
       child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: _kPrimary, borderRadius: BorderRadius.circular(20)),
-                child: const Text('Unit 1',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text('Basics – Greetings & Numbers',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    overflow: TextOverflow.ellipsis),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: const LinearProgressIndicator(
-              value: 0.4,
-              minHeight: 10,
-              backgroundColor: Color(0xFFE5E5E5),
-              valueColor: AlwaysStoppedAnimation<Color>(_kPrimary),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 6),
-          const Text('2 of 5 lessons completed',
-              style: TextStyle(fontSize: 12, color: Colors.grey)),
-        ],
-      ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _kPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    unitLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    unitSubtitle,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: totalCount > 0 ? completedCount / totalCount : 0,
+                minHeight: 10,
+                backgroundColor: const Color(0xFFE5E5E5),
+                valueColor: const AlwaysStoppedAnimation<Color>(_kPrimary),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$completedCount of $totalCount lessons completed',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -261,35 +346,96 @@ class _NodeData {
   final _NodeStatus status;
   final String label;
   final double xFraction;
-  const _NodeData({required this.status, required this.label, required this.xFraction});
+  final String? lessonId;
+
+  const _NodeData({
+    required this.status,
+    required this.label,
+    required this.xFraction,
+    this.lessonId,
+  });
 }
 
-class _AdventureMap extends StatelessWidget {
+class _AdventureMap extends ConsumerWidget {
   final Animation<double> pulse;
   final Animation<double> float;
   final Animation<double> path;
 
   const _AdventureMap({required this.pulse, required this.float, required this.path});
 
-  static const _nodes = [
-    _NodeData(status: _NodeStatus.completed, label: 'Lesson 1', xFraction: 0.50),
-    _NodeData(status: _NodeStatus.completed, label: 'Lesson 2', xFraction: 0.72),
-    _NodeData(status: _NodeStatus.active,    label: 'Lesson 3', xFraction: 0.28),
-    _NodeData(status: _NodeStatus.locked,    label: 'Lesson 4', xFraction: 0.55),
-  ];
+  static const _xFractions = [0.50, 0.72, 0.28, 0.55];
+
+  List<_NodeData> _buildNodes(
+    Map<String, dynamic>? courseData,
+    Set<String> completedIds,
+  ) {
+    if (courseData == null) {
+      return const [
+        _NodeData(status: _NodeStatus.active, label: 'Lesson 1', xFraction: 0.50),
+      ];
+    }
+
+    final units = courseData['units'] as List<dynamic>?;
+    if (units == null || units.isEmpty) {
+      return const [
+        _NodeData(status: _NodeStatus.active, label: 'Lesson 1', xFraction: 0.50),
+      ];
+    }
+
+    final firstUnit = units.first as Map<String, dynamic>;
+    final rawLessons = (firstUnit['lessons'] as List<dynamic>? ?? []).take(4).toList();
+    if (rawLessons.isEmpty) {
+      return const [
+        _NodeData(status: _NodeStatus.active, label: 'Lesson 1', xFraction: 0.50),
+      ];
+    }
+
+    // Find first incomplete lesson to mark as active
+    int activeIndex = rawLessons.indexWhere((l) {
+      final id = ((l as Map<String, dynamic>)['_id'] ?? '') as String;
+      return !completedIds.contains(id);
+    });
+    if (activeIndex == -1) activeIndex = 0; // all completed — keep first active
+
+    return List.generate(rawLessons.length, (i) {
+      final lesson = rawLessons[i] as Map<String, dynamic>;
+      final id = (lesson['_id'] ?? '') as String;
+      final title = (lesson['title'] ?? 'Lesson ${i + 1}') as String;
+
+      final _NodeStatus status;
+      if (completedIds.contains(id)) {
+        status = _NodeStatus.completed;
+      } else if (i == activeIndex) {
+        status = _NodeStatus.active;
+      } else {
+        status = _NodeStatus.locked;
+      }
+
+      return _NodeData(
+        status: status,
+        label: title,
+        xFraction: _xFractions[i % _xFractions.length],
+        lessonId: id.isNotEmpty ? id : null,
+      );
+    });
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final courseData = ref.watch(_enrolledCourseProvider).valueOrNull;
+    final completedIds = ref.watch(_completedLessonsProvider).valueOrNull ?? const {};
+    final nodes = _buildNodes(courseData, completedIds);
+
     const mapHeight = 480.0;
     return SizedBox(
       height: mapHeight,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
-          final spacing = mapHeight / (_nodes.length + 1);
+          final spacing = mapHeight / (nodes.length + 1);
           final positions = List.generate(
-            _nodes.length,
-            (i) => Offset(_nodes[i].xFraction * w, mapHeight - spacing * (i + 1)),
+            nodes.length,
+            (i) => Offset(nodes[i].xFraction * w, mapHeight - spacing * (i + 1)),
           );
           return Stack(
             children: [
@@ -300,14 +446,14 @@ class _AdventureMap extends StatelessWidget {
                   painter: _PathPainter(positions: positions, progress: path.value),
                 ),
               ),
-              for (int i = 0; i < _nodes.length; i++)
+              for (int i = 0; i < nodes.length; i++)
                 Positioned(
                   left: positions[i].dx - 32,
                   top: positions[i].dy - 32,
                   child: _LessonNode(
-                    data: _nodes[i],
-                    pulse: _nodes[i].status == _NodeStatus.active ? pulse : null,
-                    float: _nodes[i].status == _NodeStatus.active ? float : null,
+                    data: nodes[i],
+                    pulse: nodes[i].status == _NodeStatus.active ? pulse : null,
+                    float: nodes[i].status == _NodeStatus.active ? float : null,
                   ),
                 ),
             ],
@@ -332,7 +478,8 @@ class _LessonNode extends StatelessWidget {
     if (float != null) {
       node = AnimatedBuilder(
         animation: float!,
-        builder: (_, child) => Transform.translate(offset: Offset(0, float!.value), child: child),
+        builder: (_, child) =>
+            Transform.translate(offset: Offset(0, float!.value), child: child),
         child: node,
       );
     }
@@ -350,8 +497,10 @@ class _LessonNode extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           if (data.status != _NodeStatus.locked) {
-            final lessonId = data.label.toLowerCase().replaceAll(' ', '_');
-            context.push('/lessons/$lessonId/vocabulary');
+            final lessonId = data.lessonId;
+            if (lessonId != null) {
+              context.push('/lessons/$lessonId/vocabulary');
+            }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -369,23 +518,23 @@ class _LessonNode extends StatelessWidget {
   Widget _buildCircle() {
     switch (data.status) {
       case _NodeStatus.completed:
-        return _CircleNode(
+        return const _CircleNode(
           color: _kGreen,
-          borderColor: const Color(0xFF006B28),
-          child: const Icon(Icons.check_rounded, color: Colors.white, size: 28),
+          borderColor: Color(0xFF006B28),
+          child: Icon(Icons.check_rounded, color: Colors.white, size: 28),
         );
       case _NodeStatus.active:
-        return _CircleNode(
+        return const _CircleNode(
           color: _kPrimary,
-          borderColor: const Color(0xFF003D8F),
+          borderColor: Color(0xFF003D8F),
           shadow: true,
-          child: const Icon(Icons.star_rounded, color: Colors.white, size: 28),
+          child: Icon(Icons.star_rounded, color: Colors.white, size: 28),
         );
       case _NodeStatus.locked:
-        return _CircleNode(
-          color: const Color(0xFFD1D5DB),
-          borderColor: const Color(0xFF9CA3AF),
-          child: const Icon(Icons.lock_rounded, color: Colors.white, size: 24),
+        return const _CircleNode(
+          color: Color(0xFFD1D5DB),
+          borderColor: Color(0xFF9CA3AF),
+          child: Icon(Icons.lock_rounded, color: Colors.white, size: 24),
         );
     }
   }
@@ -422,7 +571,7 @@ class _CircleNode extends StatelessWidget {
   }
 }
 
-// ── Path painter ─────────────────────────────────────────────────────────
+// ── Path painter ───────────────────────────────────────────────────────────
 
 class _PathPainter extends CustomPainter {
   final List<Offset> positions;
@@ -465,8 +614,12 @@ class _PathPainter extends CustomPainter {
 
     for (int s = 1; s <= steps; s++) {
       final t = s / steps;
-      final x = math.pow(1 - t, 2) * p0.dx + 2 * (1 - t) * t * ctrl.dx + t * t * p2.dx;
-      final y = math.pow(1 - t, 2) * p0.dy + 2 * (1 - t) * t * ctrl.dy + t * t * p2.dy;
+      final x = math.pow(1 - t, 2) * p0.dx +
+          2 * (1 - t) * t * ctrl.dx +
+          t * t * p2.dx;
+      final y = math.pow(1 - t, 2) * p0.dy +
+          2 * (1 - t) * t * ctrl.dy +
+          t * t * p2.dy;
       final curr = Offset(x.toDouble(), y.toDouble());
       final segLen = (curr - prev).distance;
 
@@ -477,8 +630,10 @@ class _PathPainter extends CustomPainter {
         final needed = drawing ? dashLen - carry : gapLen - carry;
         if (rem >= needed) {
           final frac = needed / segLen;
-          final to = Offset(from.dx + (curr.dx - prev.dx) * frac,
-                            from.dy + (curr.dy - prev.dy) * frac);
+          final to = Offset(
+            from.dx + (curr.dx - prev.dx) * frac,
+            from.dy + (curr.dy - prev.dy) * frac,
+          );
           if (drawing) canvas.drawLine(from, to, paint);
           from = to;
           rem -= needed;
@@ -506,7 +661,13 @@ class _QuestData {
   final int current;
   final int total;
   final Color color;
-  const _QuestData({required this.label, required this.current, required this.total, required this.color});
+
+  const _QuestData({
+    required this.label,
+    required this.current,
+    required this.total,
+    required this.color,
+  });
 }
 
 class _DailyQuestsCard extends StatelessWidget {
@@ -523,7 +684,11 @@ class _DailyQuestsCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -533,9 +698,15 @@ class _DailyQuestsCard extends StatelessWidget {
             children: [
               const Icon(Icons.shield_rounded, color: _kOrange, size: 20),
               const SizedBox(width: 8),
-              const Text('Daily Quests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'Daily Quests',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const Spacer(),
-              Text('Resets in 5h', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              Text(
+                'Resets in 5h',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -551,6 +722,7 @@ class _DailyQuestsCard extends StatelessWidget {
 
 class _QuestRow extends StatelessWidget {
   final _QuestData quest;
+
   const _QuestRow({required this.quest});
 
   @override
@@ -568,7 +740,10 @@ class _QuestRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(quest.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              Text(
+                quest.label,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
               const SizedBox(height: 4),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
@@ -585,7 +760,11 @@ class _QuestRow extends StatelessWidget {
         const SizedBox(width: 12),
         Text(
           '${quest.current}/${quest.total}',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
         ),
       ],
     );
@@ -610,10 +789,17 @@ class _ProfileTab extends StatelessWidget {
           CircleAvatar(
             radius: 48,
             backgroundColor: _kPrimary,
-            backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty) ? NetworkImage(avatarUrl) : null,
+            backgroundImage:
+                (avatarUrl != null && avatarUrl.isNotEmpty) ? NetworkImage(avatarUrl) : null,
             child: (avatarUrl == null || avatarUrl.isEmpty)
-                ? Text((name.isNotEmpty ? name : email)[0].toUpperCase(),
-                    style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold))
+                ? Text(
+                    (name.isNotEmpty ? name : email)[0].toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 36,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
                 : null,
           ),
           const SizedBox(height: 16),
