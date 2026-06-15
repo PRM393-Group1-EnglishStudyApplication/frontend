@@ -85,98 +85,82 @@ void main() {
     expect(navigationBar.destinations.length, 4);
 
     // Verify tab labels
-    expect(find.text('Home'), findsWidgets);
-    expect(find.text('Courses'), findsOneWidget);
-    expect(find.text('Progress'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
+    expect(find.text('Learn'), findsWidgets);
+    expect(find.text('Leaderboard'), findsWidgets);
+    expect(find.text('Quests'), findsWidgets);
+    expect(find.text('Profile'), findsWidgets);
   });
 
-  testWidgets('HomePage initial state shows Home tab with greeting and summary', (WidgetTester tester) async {
+  testWidgets('HomePage initial state shows Learn tab content', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Verify greeting text
-    expect(find.text('Welcome back,'), findsOneWidget);
-    expect(find.text('Jane Doe'), findsOneWidget);
+    // Verify language / course title
+    expect(find.text('Vietnamese'), findsOneWidget);
 
-    // Verify summary rows
-    expect(find.text('Current Level'), findsOneWidget);
-    expect(find.text('INTERMEDIATE'), findsOneWidget);
-    expect(find.text('Streak'), findsOneWidget);
-    expect(find.text('5 Days'), findsOneWidget);
-    expect(find.text('Total XP'), findsOneWidget);
-    expect(find.text('450 XP'), findsOneWidget);
+    // Verify stats pills values
+    expect(find.text('7'), findsOneWidget); // Streak
+    expect(find.text('320'), findsOneWidget); // Diamonds
+    expect(find.text('5'), findsOneWidget); // Hearts
+
+    // Verify progress card details
+    expect(find.text('Unit 1'), findsOneWidget);
+    expect(find.text('Basics – Greetings & Numbers'), findsOneWidget);
+    expect(find.text('2 of 5 lessons completed'), findsOneWidget);
+
+    // Scroll down to bring daily quests card into view
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -350));
+    await tester.pump();
+
+    // Verify daily quests card
+    expect(find.text('Daily Quests'), findsOneWidget);
+    expect(find.text('Earn 10 XP'), findsOneWidget);
+    expect(find.text('Complete 1 lesson'), findsOneWidget);
   });
 
-  testWidgets('Tapping Courses tab displays simple course placeholders', (WidgetTester tester) async {
+  testWidgets('Tapping Leaderboard tab displays placeholder', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Tap the Courses tab
-    await tester.tap(find.text('Courses'));
-    await tester.pumpAndSettle();
+    // Tap the Leaderboard tab
+    await tester.tap(find.text('Leaderboard'));
+    await tester.pump(const Duration(milliseconds: 200));
 
-    // Verify AppBar title changed
-    expect(find.descendant(of: find.byType(AppBar), matching: find.text('Courses')), findsOneWidget);
-
-    // Verify some course placeholders are present
-    expect(find.text('Introduction to Mobile Programming'), findsOneWidget);
-    expect(find.text('Learn Flutter & Dart basics'), findsOneWidget);
-    expect(find.text('Advanced Flutter UI & Animations'), findsOneWidget);
+    // Verify placeholder text is shown
+    expect(find.text('Leaderboard'), findsWidgets);
+    expect(find.text('Coming soon'), findsOneWidget);
   });
 
-  testWidgets('Tapping Progress tab displays current user statistics cards', (WidgetTester tester) async {
+  testWidgets('Tapping Quests tab displays placeholder', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Tap the Progress tab
-    await tester.tap(find.text('Progress'));
-    await tester.pumpAndSettle();
+    // Tap the Quests tab
+    await tester.tap(find.text('Quests'));
+    await tester.pump(const Duration(milliseconds: 200));
 
-    // Verify AppBar title changed
-    expect(find.descendant(of: find.byType(AppBar), matching: find.text('Progress')), findsOneWidget);
-
-    // Verify Stats Overview title
-    expect(find.text('Stats Overview'), findsOneWidget);
-
-    // Verify card content
-    expect(find.text('Level'), findsOneWidget);
-    expect(find.text('INTERMEDIATE'), findsOneWidget);
-    expect(find.text('Streak'), findsOneWidget);
-    expect(find.text('5 Days'), findsOneWidget);
-    expect(find.text('Total XP'), findsOneWidget);
-    expect(find.text('450 XP'), findsOneWidget);
-    expect(find.text('Status'), findsOneWidget);
-    expect(find.text('Active'), findsOneWidget);
+    // Verify placeholder text is shown
+    expect(find.text('Quests'), findsWidgets);
+    expect(find.text('Coming soon'), findsOneWidget);
   });
 
-  testWidgets('Tapping Profile tab displays profile card and sync/sign-out buttons', (WidgetTester tester) async {
+  testWidgets('Tapping Profile tab displays profile card and sign-out button', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
     // Tap the Profile tab
     await tester.tap(find.text('Profile'));
-    await tester.pumpAndSettle();
-
-    // Verify AppBar title changed
-    expect(find.descendant(of: find.byType(AppBar), matching: find.text('Profile')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
 
     // Verify user details
     expect(find.text('Jane Doe'), findsOneWidget);
     expect(find.text('jane.doe@example.com'), findsOneWidget);
 
-    // Verify buttons are visible
-    expect(find.text('Sync with Backend'), findsOneWidget);
+    // Verify sign out button is visible
     expect(find.text('Sign Out'), findsOneWidget);
-
-    // Tap Sync with Backend and verify mock call count
-    final initialCallCount = fakeAuthRepository.callCount;
-    await tester.tap(find.text('Sync with Backend'));
-    await tester.pumpAndSettle();
-    expect(fakeAuthRepository.callCount, initialCallCount + 1);
   });
 }

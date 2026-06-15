@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../routes/app_routes.dart';
 
 const Color _kPrimary = Color(0xFF0055C6);
 const Color _kOrange = Color(0xFFFD9D06);
@@ -201,7 +203,9 @@ class _StatPill extends StatelessWidget {
 class _LevelProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.courseList),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -243,6 +247,7 @@ class _LevelProgressCard extends StatelessWidget {
           const Text('2 of 5 lessons completed',
               style: TextStyle(fontSize: 12, color: Colors.grey)),
         ],
+      ),
       ),
     );
   }
@@ -339,7 +344,26 @@ class _LessonNode extends StatelessWidget {
       );
     }
 
-    return SizedBox(width: 64, height: 64, child: node);
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: GestureDetector(
+        onTap: () {
+          if (data.status != _NodeStatus.locked) {
+            final lessonId = data.label.toLowerCase().replaceAll(' ', '_');
+            context.push('/lessons/$lessonId/vocabulary');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('This lesson is locked. Complete previous lessons first!'),
+                duration: Duration(milliseconds: 1000),
+              ),
+            );
+          }
+        },
+        child: node,
+      ),
+    );
   }
 
   Widget _buildCircle() {
