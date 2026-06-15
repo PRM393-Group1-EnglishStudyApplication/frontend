@@ -5,6 +5,7 @@ import '../features/courses/presentation/course_list_page.dart';
 import '../features/courses/presentation/course_detail_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/units/presentation/unit_list_page.dart';
+import '../features/lessons/presentation/lesson_list_page.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -31,6 +32,12 @@ class AppRouter {
         path: AppRoutes.unitList,
         builder: (context, state) => UnitListPage(
           courseId: state.pathParameters['courseId']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.lessonList,
+        builder: (context, state) => LessonListPage(
+          unitId: state.pathParameters['unitId']!,
         ),
       ),
     ],
