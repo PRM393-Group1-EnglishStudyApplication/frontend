@@ -17,7 +17,7 @@ const Color _kRed = Color(0xFFFF4B4B);
 // ── Providers ──────────────────────────────────────────────────────────────
 
 /// Fetches enrolled course detail with nested units+lessons from backend.
-final _enrolledCourseProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+final _enrolledCourseProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
   final prefs = await SharedPreferences.getInstance();
   final courseId = prefs.getString('enrolled_course_id');
   if (courseId == null) return null;
@@ -27,7 +27,7 @@ final _enrolledCourseProvider = FutureProvider<Map<String, dynamic>?>((ref) asyn
 });
 
 /// Fetches the set of lesson IDs the current user has completed.
-final _completedLessonsProvider = FutureProvider<Set<String>>((ref) async {
+final _completedLessonsProvider = FutureProvider.autoDispose<Set<String>>((ref) async {
   final token = ref.watch(clerkTokenProvider);
   if (token == null) return const {};
   try {

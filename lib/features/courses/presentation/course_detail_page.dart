@@ -32,7 +32,7 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('enrolled_course_id', courseId);
-      if (mounted) context.go('/courses/$courseId/units');
+      if (mounted) context.go('/');
     } finally {
       if (mounted) setState(() => _enrolling = false);
     }
