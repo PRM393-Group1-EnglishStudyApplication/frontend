@@ -4,6 +4,7 @@ class CourseModel {
   final String description;
   final String targetLevel;
   final String? imageUrl;
+  final int? unitCount;
 
   const CourseModel({
     required this.id,
@@ -11,6 +12,7 @@ class CourseModel {
     required this.description,
     required this.targetLevel,
     this.imageUrl,
+    this.unitCount,
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class CourseModel {
       description: (json['description'] ?? '') as String,
       targetLevel: (json['targetLevel'] ?? '') as String,
       imageUrl: json['imageUrl'] as String?,
+      unitCount: json['unitCount'] as int?,
     );
   }
 }
