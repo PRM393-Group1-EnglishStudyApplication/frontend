@@ -1,19 +1,47 @@
+import 'dart:io';
+
 import 'package:clerk_auth/clerk_auth.dart' as clerk;
 import 'package:clerk_flutter/clerk_flutter.dart';
+import 'package:clerk_flutter/src/utils/clerk_file_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../routes/app_router.dart';
+
+class NoopClerkFileCache implements ClerkFileCache {
+  const NoopClerkFileCache();
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  void terminate() {}
+
+  @override
+  Stream<File> stream(
+    Uri uri, {
+    Duration ttl = ClerkFileCache.defaultTTL,
+    Map<String, String>? headers,
+  }) {
+    return const Stream<File>.empty();
+  }
+}
 
 class AppClerkAuthConfig extends ClerkAuthConfig {
   @override
   final clerk.HttpService httpService;
 
   AppClerkAuthConfig({
-    required super.publishableKey,
+    required String publishableKey,
     clerk.HttpService? httpService,
-    super.loading,
-  }) : httpService = httpService ?? const clerk.DefaultHttpService();
+    Widget? loading,
+  }) : httpService = httpService ?? const clerk.DefaultHttpService(),
+       super(
+         publishableKey: publishableKey,
+         loading: loading,
+         persistor: clerk.Persistor.none,
+         fileCache: const NoopClerkFileCache(),
+       );
 }
 
 class PrmApp extends StatelessWidget {

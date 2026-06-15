@@ -7,6 +7,9 @@ import 'package:prm_frontend/features/auth/domain/entities/app_user.dart';
 import 'package:prm_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:prm_frontend/features/auth/presentation/providers/auth_providers.dart';
 import 'package:prm_frontend/features/home/presentation/home_page.dart';
+import 'package:prm_frontend/features/hearts/domain/entities/heart_status.dart';
+import 'package:prm_frontend/features/hearts/domain/repositories/heart_repository.dart';
+import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../mocks/mock_http_service.dart';
@@ -29,6 +32,23 @@ class FakeAuthRepository implements AuthRepository {
   }
 }
 
+class FakeHeartRepository implements HeartRepository {
+  HeartStatus hearts = const HeartStatus(
+    userId: 'user_123',
+    currentHearts: 5,
+    maxHearts: 5,
+  );
+
+  @override
+  Future<HeartStatus> getMyHearts() async => hearts;
+
+  @override
+  Future<HeartStatus> refillHearts() async {
+    hearts = hearts.copyWith(currentHearts: hearts.maxHearts);
+    return hearts;
+  }
+}
+
 void main() {
   const testUser = AppUser(
     id: 'user_123',
@@ -41,37 +61,43 @@ void main() {
   );
 
   late FakeAuthRepository fakeAuthRepository;
+  late FakeHeartRepository fakeHeartRepository;
 
   setUpAll(() {
     dotenv.loadFromString(
-      envString: 'CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsucHJtLmxlYXJuaW5nJA==\nAPI_BASE_URL=https://backend-6i8r.onrender.com',
+      envString:
+          'CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsucHJtLmxlYXJuaW5nJA==\nAPI_BASE_URL=https://backend-6i8r.onrender.com',
     );
   });
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     fakeAuthRepository = FakeAuthRepository()..user = testUser;
+    fakeHeartRepository = FakeHeartRepository();
   });
 
   Widget buildTestWidget() {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(fakeAuthRepository),
+        heartRepositoryProvider.overrideWithValue(fakeHeartRepository),
         clerkTokenProvider.overrideWith((ref) => 'fake_token'),
       ],
       child: ClerkAuth(
         config: TestClerkAuthConfig(
           publishableKey: 'pk_test_Y2xlcmsucHJtLmxlYXJuaW5nJA==',
-          httpService: const MockHttpService(clientResponse: janeDoeClientResponse),
+          httpService: const MockHttpService(
+            clientResponse: janeDoeClientResponse,
+          ),
         ),
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
+        child: const MaterialApp(home: HomePage()),
       ),
     );
   }
 
-  testWidgets('HomePage renders NavigationBar with four tabs', (WidgetTester tester) async {
+  testWidgets('HomePage renders NavigationBar with four tabs', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget());
     // Wait for async Clerk initialization to complete
     await tester.pump();
@@ -91,25 +117,31 @@ void main() {
     expect(find.text('Profile'), findsOneWidget);
   });
 
-  testWidgets('HomePage initial state shows Home tab with greeting and summary', (WidgetTester tester) async {
-    await tester.pumpWidget(buildTestWidget());
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+  testWidgets(
+    'HomePage initial state shows Home tab with greeting and summary',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
-    // Verify greeting text
-    expect(find.text('Welcome back,'), findsOneWidget);
-    expect(find.text('Jane Doe'), findsOneWidget);
+      // Verify greeting text
+      expect(find.text('Welcome back,'), findsOneWidget);
+      expect(find.text('Jane Doe'), findsOneWidget);
 
-    // Verify summary rows
-    expect(find.text('Current Level'), findsOneWidget);
-    expect(find.text('INTERMEDIATE'), findsOneWidget);
-    expect(find.text('Streak'), findsOneWidget);
-    expect(find.text('5 Days'), findsOneWidget);
-    expect(find.text('Total XP'), findsOneWidget);
-    expect(find.text('450 XP'), findsOneWidget);
-  });
+      // Verify summary rows
+      expect(find.text('Current Level'), findsOneWidget);
+      expect(find.text('INTERMEDIATE'), findsOneWidget);
+      expect(find.text('Streak'), findsOneWidget);
+      expect(find.text('5 Days'), findsOneWidget);
+      expect(find.text('Total XP'), findsOneWidget);
+      expect(find.text('450 XP'), findsOneWidget);
+      expect(find.byKey(const Key('heart_indicator_button')), findsOneWidget);
+    },
+  );
 
-  testWidgets('Tapping Courses tab displays simple course placeholders', (WidgetTester tester) async {
+  testWidgets('Tapping Courses tab displays simple course placeholders', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
@@ -119,7 +151,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify AppBar title changed
-    expect(find.descendant(of: find.byType(AppBar), matching: find.text('Courses')), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Courses')),
+      findsOneWidget,
+    );
 
     // Verify some course placeholders are present
     expect(find.text('Introduction to Mobile Programming'), findsOneWidget);
@@ -127,7 +162,31 @@ void main() {
     expect(find.text('Advanced Flutter UI & Animations'), findsOneWidget);
   });
 
-  testWidgets('Tapping Progress tab displays current user statistics cards', (WidgetTester tester) async {
+  testWidgets('blocks a course when the user has zero hearts', (
+    WidgetTester tester,
+  ) async {
+    fakeHeartRepository.hearts = const HeartStatus(
+      userId: 'user_123',
+      currentHearts: 0,
+      maxHearts: 5,
+    );
+
+    await tester.pumpWidget(buildTestWidget());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.text('Courses'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Introduction to Mobile Programming'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No hearts left'), findsOneWidget);
+    expect(find.text('Refill hearts'), findsOneWidget);
+  });
+
+  testWidgets('Tapping Progress tab displays current user statistics cards', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
@@ -137,7 +196,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify AppBar title changed
-    expect(find.descendant(of: find.byType(AppBar), matching: find.text('Progress')), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Progress')),
+      findsOneWidget,
+    );
 
     // Verify Stats Overview title
     expect(find.text('Stats Overview'), findsOneWidget);
@@ -153,30 +215,39 @@ void main() {
     expect(find.text('Active'), findsOneWidget);
   });
 
-  testWidgets('Tapping Profile tab displays profile card and sync/sign-out buttons', (WidgetTester tester) async {
-    await tester.pumpWidget(buildTestWidget());
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+  testWidgets(
+    'Tapping Profile tab displays profile card and sync/sign-out buttons',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
-    // Tap the Profile tab
-    await tester.tap(find.text('Profile'));
-    await tester.pumpAndSettle();
+      // Tap the Profile tab
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
 
-    // Verify AppBar title changed
-    expect(find.descendant(of: find.byType(AppBar), matching: find.text('Profile')), findsOneWidget);
+      // Verify AppBar title changed
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Profile'),
+        ),
+        findsOneWidget,
+      );
 
-    // Verify user details
-    expect(find.text('Jane Doe'), findsOneWidget);
-    expect(find.text('jane.doe@example.com'), findsOneWidget);
+      // Verify user details
+      expect(find.text('Jane Doe'), findsOneWidget);
+      expect(find.text('jane.doe@example.com'), findsOneWidget);
 
-    // Verify buttons are visible
-    expect(find.text('Sync with Backend'), findsOneWidget);
-    expect(find.text('Sign Out'), findsOneWidget);
+      // Verify buttons are visible
+      expect(find.text('Sync with Backend'), findsOneWidget);
+      expect(find.text('Sign Out'), findsOneWidget);
 
-    // Tap Sync with Backend and verify mock call count
-    final initialCallCount = fakeAuthRepository.callCount;
-    await tester.tap(find.text('Sync with Backend'));
-    await tester.pumpAndSettle();
-    expect(fakeAuthRepository.callCount, initialCallCount + 1);
-  });
+      // Tap Sync with Backend and verify mock call count
+      final initialCallCount = fakeAuthRepository.callCount;
+      await tester.tap(find.text('Sync with Backend'));
+      await tester.pumpAndSettle();
+      expect(fakeAuthRepository.callCount, initialCallCount + 1);
+    },
+  );
 }

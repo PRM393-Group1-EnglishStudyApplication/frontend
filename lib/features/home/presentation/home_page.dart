@@ -4,6 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/domain/entities/app_user.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../auth/presentation/screens/profile_screen.dart';
+import '../../hearts/presentation/providers/heart_providers.dart';
+import '../../hearts/presentation/widgets/heart_indicator.dart';
+import '../../leaderboard/presentation/screens/leaderboard_screen.dart';
+import '../../lessons/data/models/course_model.dart';
+import '../../lessons/presentation/providers/lessons_providers.dart';
+import '../../lessons/presentation/screens/course_detail_screen.dart';
+import '../../practice/presentation/screens/practice_screen.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -18,13 +26,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   String _getAppBarTitle() {
     switch (_currentIndex) {
       case 0:
-        return 'Home';
+        return 'Học';
       case 1:
-        return 'Courses';
+        return 'Luyện tập';
       case 2:
-        return 'Progress';
+        return 'Bảng xếp hạng';
       case 3:
-        return 'Profile';
+        return 'Hồ sơ';
       default:
         return 'PRM Learning';
     }
@@ -36,18 +44,19 @@ class _HomePageState extends ConsumerState<HomePage> {
       appBar: AppBar(
         title: Text(_getAppBarTitle()),
         centerTitle: true,
+        actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
       ),
       body: Builder(
         builder: (context) {
           switch (_currentIndex) {
             case 0:
-              return _buildHomeTab(context);
-            case 1:
               return _buildCoursesTab(context);
+            case 1:
+              return const PracticeScreen();
             case 2:
-              return _buildProgressTab(context);
+              return const LeaderboardScreen();
             case 3:
-              return _buildProfileTab(context);
+              return const ProfileScreen();
             default:
               return const SizedBox.shrink();
           }
@@ -62,24 +71,24 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
         destinations: const <Widget>[
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
+            label: 'Học',
           ),
           NavigationDestination(
-            icon: Icon(Icons.book_outlined),
-            selectedIcon: Icon(Icons.book),
-            label: 'Courses',
+            icon: Icon(Icons.auto_stories_outlined),
+            selectedIcon: Icon(Icons.auto_stories),
+            label: 'Luyện tập',
           ),
           NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart),
-            label: 'Progress',
+            icon: Icon(Icons.leaderboard_outlined),
+            selectedIcon: Icon(Icons.leaderboard),
+            label: 'Xếp hạng',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outlined),
             selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'Hồ sơ',
           ),
         ],
       ),
@@ -89,7 +98,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildHomeTab(BuildContext context) {
     final theme = Theme.of(context);
     final clerkUser = ClerkAuth.of(context).user;
-    final String fullName = (clerkUser?.name != null && clerkUser!.name.isNotEmpty)
+    final String fullName =
+        (clerkUser?.name != null && clerkUser!.name.isNotEmpty)
         ? clerkUser.name
         : 'PRM Student';
 
@@ -113,7 +123,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     'Welcome back,',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                      color: theme.colorScheme.onPrimaryContainer.withValues(
+                        alpha: 0.7,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -187,11 +199,26 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                     loading: () => Column(
                       children: [
-                        _buildSummaryRowLoading(context, icon: Icons.star_rounded, color: Colors.amber, title: 'Current Level'),
+                        _buildSummaryRowLoading(
+                          context,
+                          icon: Icons.star_rounded,
+                          color: Colors.amber,
+                          title: 'Current Level',
+                        ),
                         const Divider(height: 24),
-                        _buildSummaryRowLoading(context, icon: Icons.local_fire_department_rounded, color: Colors.deepOrange, title: 'Streak'),
+                        _buildSummaryRowLoading(
+                          context,
+                          icon: Icons.local_fire_department_rounded,
+                          color: Colors.deepOrange,
+                          title: 'Streak',
+                        ),
                         const Divider(height: 24),
-                        _buildSummaryRowLoading(context, icon: Icons.emoji_events_rounded, color: Colors.orange, title: 'Total XP'),
+                        _buildSummaryRowLoading(
+                          context,
+                          icon: Icons.emoji_events_rounded,
+                          color: Colors.orange,
+                          title: 'Total XP',
+                        ),
                       ],
                     ),
                     error: (error, _) => Padding(
@@ -201,20 +228,28 @@ class _HomePageState extends ConsumerState<HomePage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 20),
+                              Icon(
+                                Icons.sync_problem_rounded,
+                                color: theme.colorScheme.error,
+                                size: 20,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Failed to sync stats: $error',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: theme.colorScheme.error),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           FilledButton.tonal(
-                            onPressed: () => ref.read(currentUserProvider.notifier).loadUser(),
+                            onPressed: () => ref
+                                .read(currentUserProvider.notifier)
+                                .loadUser(),
                             child: const Text('Retry Sync'),
                           ),
                         ],
@@ -289,74 +324,174 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Widget _buildCoursesTab(BuildContext context) {
     final theme = Theme.of(context);
-    final courses = [
-      {
-        'title': 'Introduction to Mobile Programming',
-        'desc': 'Learn Flutter & Dart basics',
-        'icon': Icons.smartphone_rounded,
-      },
-      {
-        'title': 'Advanced Flutter UI & Animations',
-        'desc': 'Master layout widgets and custom animations',
-        'icon': Icons.brush_rounded,
-      },
-      {
-        'title': 'State Management & Riverpod',
-        'desc': 'Understand reactivity and provider patterns',
-        'icon': Icons.account_tree_rounded,
-      },
-      {
-        'title': 'API Integration & Clerk Auth',
-        'desc': 'Connect to REST APIs and handle user authentication',
-        'icon': Icons.cloud_sync_rounded,
-      },
-    ];
+    final coursesAsync = ref.watch(coursesDataProvider);
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(24.0),
-      itemCount: courses.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final course = courses[index];
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-            ),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(course['icon'] as IconData, color: theme.colorScheme.primary),
-            ),
-            title: Text(
-              course['title'] as String,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text(
-                course['desc'] as String,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+    return coursesAsync.when(
+      data: (courses) {
+        return ListView.separated(
+          padding: const EdgeInsets.all(24.0),
+          itemCount: courses.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final course = courses[index];
+            IconData courseIcon = Icons.menu_book_rounded;
+            if (course.title.toLowerCase().contains('english')) {
+              courseIcon = Icons.language_rounded;
+            } else if (course.title.toLowerCase().contains('conversation')) {
+              courseIcon = Icons.chat_bubble_outline_rounded;
+            } else if (course.title.toLowerCase().contains('toeic')) {
+              courseIcon = Icons.assignment_rounded;
+            } else if (course.title.toLowerCase().contains('business')) {
+              courseIcon = Icons.business_center_rounded;
+            }
+
+            return Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
               ),
-            ),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Selected: ${course['title']}')),
-              );
-            },
-          ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                leading: CircleAvatar(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Icon(
+                    courseIcon,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                title: Text(
+                  course.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    course.description,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  final HeartState heartState = ref.read(heartProvider);
+                  if (!heartState.canStartLesson) {
+                    showDialog<void>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          icon: const Icon(
+                            Icons.heart_broken_rounded,
+                            color: Color(0xFFE94057),
+                            size: 36,
+                          ),
+                          title: const Text('Hết lượt tim'),
+                          content: const Text(
+                            'Hãy nạp lại tim trước khi bắt đầu bài học mới.',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Đóng'),
+                            ),
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                ref.read(heartProvider.notifier).refillHearts();
+                              },
+                              child: const Text('Nạp tim'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (context) => CourseDetailScreen(course: course),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'Lỗi tải khóa học: $err',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.tonal(
+                onPressed: () => ref.invalidate(coursesDataProvider),
+                child: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  void _openCourse(String title) {
+    final HeartState heartState = ref.read(heartProvider);
+    if (!heartState.canStartLesson) {
+      showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            icon: const Icon(
+              Icons.heart_broken_rounded,
+              color: Color(0xFFE94057),
+              size: 36,
+            ),
+            title: const Text('No hearts left'),
+            content: const Text(
+              'Refill your hearts before starting another lesson.',
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Not now'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  ref.read(heartProvider.notifier).refillHearts();
+                },
+                child: const Text('Refill hearts'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Selected: $title')));
   }
 
   Widget _buildProgressTab(BuildContext context) {
@@ -385,7 +520,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 40),
+                        Icon(
+                          Icons.sync_problem_rounded,
+                          color: theme.colorScheme.error,
+                          size: 40,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'Failed to sync statistics: $error',
@@ -394,7 +533,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                         const SizedBox(height: 12),
                         FilledButton.tonal(
-                          onPressed: () => ref.read(currentUserProvider.notifier).loadUser(),
+                          onPressed: () =>
+                              ref.read(currentUserProvider.notifier).loadUser(),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -534,7 +674,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget _buildProfileTab(BuildContext context) {
     final theme = Theme.of(context);
     final clerkUser = ClerkAuth.of(context).user;
-    final String fullName = (clerkUser?.name != null && clerkUser!.name.isNotEmpty)
+    final String fullName =
+        (clerkUser?.name != null && clerkUser!.name.isNotEmpty)
         ? clerkUser.name
         : 'PRM Student';
     final String email = clerkUser?.email ?? '';
@@ -564,7 +705,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                         : null,
                     child: avatarUrl == null || avatarUrl.isEmpty
                         ? Text(
-                            (fullName.isNotEmpty ? fullName : email).substring(0, 1).toUpperCase(),
+                            (fullName.isNotEmpty ? fullName : email)
+                                .substring(0, 1)
+                                .toUpperCase(),
                             style: theme.textTheme.headlineLarge?.copyWith(
                               color: theme.colorScheme.onPrimary,
                             ),
@@ -586,7 +729,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     email,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                      color: theme.colorScheme.onPrimaryContainer.withValues(
+                        alpha: 0.8,
+                      ),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -611,7 +756,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                       SizedBox(width: 8),
-                      Text('Syncing stats with backend...', style: TextStyle(fontSize: 12)),
+                      Text(
+                        'Syncing stats with backend...',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ],
                   ),
                 ),
@@ -620,12 +768,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.orange,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Sync failed: $error',
-                          style: const TextStyle(fontSize: 12, color: Colors.orange),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange,
+                          ),
                         ),
                       ),
                     ],
