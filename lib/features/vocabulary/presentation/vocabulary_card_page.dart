@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../data/models/vocabulary_model.dart';
 import '../data/services/vocabulary_service.dart';
@@ -119,7 +120,7 @@ class _VocabularyCardPageState extends ConsumerState<VocabularyCardPage> {
                                   duration: const Duration(milliseconds: 300),
                                   curve: Curves.easeInOut,
                                 )
-                            : () => Navigator.of(context).pop(),
+                            : () => context.pop(),
                         child: Text(_currentPage < words.length - 1 ? 'Next' : 'Finish'),
                       ),
                     ),
