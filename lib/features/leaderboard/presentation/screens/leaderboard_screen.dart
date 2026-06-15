@@ -257,7 +257,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             Positioned(
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, py: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: medalColor,
                   borderRadius: BorderRadius.circular(10),

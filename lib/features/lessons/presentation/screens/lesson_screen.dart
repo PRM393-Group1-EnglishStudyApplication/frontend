@@ -272,7 +272,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                     builder: (context, ref, child) {
                       final heartState = ref.watch(heartProvider);
                       return Text(
-                        '${heartState.currentHearts}',
+                        '${heartState.hearts?.currentHearts ?? 0}',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       );
                     },
@@ -363,8 +363,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       });
 
       if (!isCorrect) {
-        // Decrease heart in local state or ref
-        ref.read(heartProvider.notifier).decrementHearts();
+        // Keep the exercise feedback responsive. The submit response remains
+        // the source of truth and reconciles the count with the backend.
+        ref.read(heartProvider.notifier).deductHeartOnError();
       }
     } else {
       // Continue to next or submit
@@ -590,7 +591,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             onPressed: () {
               // Reload user details and go back
               ref.read(currentUserProvider.notifier).loadUser();
-              ref.read(heartProvider.notifier).syncHeartsWithServer();
+              ref.read(heartProvider.notifier).updateHeartCount(res.currentHearts);
               
               Navigator.of(context).pop();
             },
@@ -638,6 +639,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     try {
       final repository = ref.read(lessonsRepositoryProvider);
       final res = await repository.submitLesson(widget.lesson.id, answersList);
+      await ref.read(heartProvider.notifier).updateHeartCount(res.currentHearts);
 
       setState(() {
         _result = res;
