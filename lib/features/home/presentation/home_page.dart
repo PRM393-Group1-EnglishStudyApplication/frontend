@@ -281,7 +281,7 @@ class _AdventureMap extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
-          const spacing = mapHeight / (_nodes.length + 1);
+          final spacing = mapHeight / (_nodes.length + 1);
           final positions = List.generate(
             _nodes.length,
             (i) => Offset(_nodes[i].xFraction * w, mapHeight - spacing * (i + 1)),
