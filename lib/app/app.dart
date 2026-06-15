@@ -1,19 +1,54 @@
+import 'package:clerk_auth/clerk_auth.dart' as clerk;
+import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../routes/app_router.dart';
 
+class AppClerkAuthConfig extends ClerkAuthConfig {
+  @override
+  final clerk.HttpService httpService;
+
+  AppClerkAuthConfig({
+    required super.publishableKey,
+    clerk.HttpService? httpService,
+    super.loading,
+  }) : httpService = httpService ?? const clerk.DefaultHttpService();
+}
+
 class PrmApp extends StatelessWidget {
-  const PrmApp({super.key});
+  static const String fallbackClerkPublishableKey = 'pk_test_dGVzdC5jbGVyay5hY2NvdW50cy5kZXYk';
+
+  final clerk.HttpService? httpService;
+
+  const PrmApp({super.key, this.httpService});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'PRM Frontend',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+    final String clerkKey = dotenv.get('CLERK_PUBLISHABLE_KEY', fallback: fallbackClerkPublishableKey);
+
+    return ClerkAuth(
+      config: AppClerkAuthConfig(
+        publishableKey: clerkKey,
+        httpService: httpService,
       ),
-      routerConfig: AppRouter.router,
+      child: MaterialApp.router(
+        title: 'PRM Frontend',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.teal,
+            brightness: Brightness.light,
+          ),
+        ),
+        builder: (BuildContext context, Widget? child) {
+          return ClerkErrorListener(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+        routerConfig: AppRouter.router,
+      ),
     );
   }
 }

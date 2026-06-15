@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../features/auth/presentation/widgets/auth_gate.dart';
 import '../features/home/presentation/home_page.dart';
 import 'app_routes.dart';
 
@@ -9,7 +10,9 @@ class AppRouter {
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+        builder: (context, state) => const AuthGate(
+          child: HomePage(),
+        ),
       ),
     ],
   );
