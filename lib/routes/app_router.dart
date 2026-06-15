@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/widgets/auth_gate.dart';
 import '../features/home/presentation/home_page.dart';
+import '../features/lessons/presentation/lesson_list_page.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -12,6 +13,12 @@ class AppRouter {
         path: AppRoutes.home,
         builder: (context, state) => const AuthGate(
           child: HomePage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.lessonList,
+        builder: (context, state) => LessonListPage(
+          unitId: state.pathParameters['unitId']!,
         ),
       ),
     ],
