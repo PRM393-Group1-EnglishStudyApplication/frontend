@@ -6,6 +6,7 @@ import '../features/courses/presentation/course_detail_page.dart';
 import '../features/home/presentation/home_page.dart';
 import '../features/units/presentation/unit_list_page.dart';
 import '../features/lessons/presentation/lesson_list_page.dart';
+import '../features/vocabulary/presentation/vocabulary_card_page.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -38,6 +39,12 @@ class AppRouter {
         path: AppRoutes.lessonList,
         builder: (context, state) => LessonListPage(
           unitId: state.pathParameters['unitId']!,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.vocabularyCard,
+        builder: (context, state) => VocabularyCardPage(
+          lessonId: state.pathParameters['lessonId']!,
         ),
       ),
     ],

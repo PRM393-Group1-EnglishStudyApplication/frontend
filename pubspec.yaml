@@ -36,6 +36,7 @@ dependencies:
   clerk_flutter: ^0.0.16-beta
   flutter_riverpod: ^2.5.1
   shared_preferences: ^2.2.0
+  audioplayers: ^6.7.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
