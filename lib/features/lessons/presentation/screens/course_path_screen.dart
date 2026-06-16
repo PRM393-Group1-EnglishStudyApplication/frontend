@@ -38,10 +38,11 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen> with Ticker
 
   double _getXOffset(int index, double width) {
     final center = width / 2;
-    // Keep it responsive, leaving margin on both sides
-    final double amplitude = math.min(width - 140, 260.0) / 2;
-    final double angle = index * math.pi / 2; // alternates center -> right -> center -> left
-    return center + amplitude * math.sin(angle) - 40; // 40 is half of button width (80)
+    // We wiggle gently and symmetrically around the center axis (alternating left and right)
+    // with a moderate amplitude (40-50px) that keeps nodes perfectly balanced and responsive.
+    final double amplitude = math.min(45.0, width * 0.12);
+    final double sign = (index % 2 == 0) ? -1.0 : 1.0;
+    return center + (amplitude * sign) - 40; // 40 is half of button width (80)
   }
 
   @override
@@ -454,7 +455,8 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen> with Ticker
                       final isLocked = !isUnlocked;
 
                       return Positioned(
-                        left: x,
+                        left: x + 40 - 85, // Centered at x + 40, container width is 170
+                        width: 170,
                         top: y,
                         child: _buildPathNode(context, lesson, isCompleted, isActive, isLocked),
                       );
