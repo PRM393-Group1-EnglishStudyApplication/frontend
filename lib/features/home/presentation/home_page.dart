@@ -8,9 +8,9 @@ import '../../auth/presentation/screens/profile_screen.dart';
 import '../../hearts/presentation/providers/heart_providers.dart';
 import '../../hearts/presentation/widgets/heart_indicator.dart';
 import '../../leaderboard/presentation/screens/leaderboard_screen.dart';
-import '../../lessons/data/models/course_model.dart';
 import '../../lessons/presentation/providers/lessons_providers.dart';
 import '../../lessons/presentation/screens/course_detail_screen.dart';
+import '../../lessons/presentation/screens/course_path_screen.dart';
 import '../../practice/presentation/screens/practice_screen.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -41,16 +41,18 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_getAppBarTitle()),
-        centerTitle: true,
-        actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
-      ),
+      appBar: _currentIndex == 0
+          ? null
+          : AppBar(
+              title: Text(_getAppBarTitle()),
+              centerTitle: true,
+              actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
+            ),
       body: Builder(
         builder: (context) {
           switch (_currentIndex) {
             case 0:
-              return _buildCoursesTab(context);
+              return const CoursePathScreen();
             case 1:
               return const PracticeScreen();
             case 2:

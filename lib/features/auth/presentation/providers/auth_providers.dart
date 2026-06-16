@@ -11,7 +11,6 @@ import '../../domain/repositories/auth_repository.dart';
 final StateProvider<String?> clerkTokenProvider = StateProvider<String?>((Ref ref) => null);
 
 final Provider<Dio> authDioProvider = Provider<Dio>((Ref ref) {
-  final String? token = ref.watch(clerkTokenProvider);
   final String rawUrl = dotenv.get('API_BASE_URL', fallback: 'https://backend-6i8r.onrender.com');
   final String baseUrl = rawUrl.replaceAll(RegExp(r'/+$'), '');
 
@@ -22,10 +21,19 @@ final Provider<Dio> authDioProvider = Provider<Dio>((Ref ref) {
       receiveTimeout: const Duration(seconds: 60),
       headers: <String, dynamic>{
         'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
       },
     ),
   );
+
+  dio.interceptors.add(InterceptorsWrapper(
+    onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+      final String? token = ref.read(clerkTokenProvider);
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+      return handler.next(options);
+    },
+  ));
 
   dio.interceptors.add(LogInterceptor(
     requestHeader: true,

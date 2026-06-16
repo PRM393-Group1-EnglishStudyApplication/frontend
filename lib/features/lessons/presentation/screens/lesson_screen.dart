@@ -6,6 +6,7 @@ import '../../../../features/hearts/presentation/providers/heart_providers.dart'
 import '../../data/models/exercise_model.dart';
 import '../../data/models/lesson_model.dart';
 import '../providers/lessons_providers.dart';
+import '../providers/course_providers.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
   final LessonModel lesson;
@@ -640,6 +641,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       final repository = ref.read(lessonsRepositoryProvider);
       final res = await repository.submitLesson(widget.lesson.id, answersList);
       await ref.read(heartProvider.notifier).updateHeartCount(res.currentHearts);
+      ref.read(completedLessonsProvider.notifier).markAsCompleted(widget.lesson.id);
 
       setState(() {
         _result = res;

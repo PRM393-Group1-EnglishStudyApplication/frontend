@@ -40,7 +40,11 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     final String? syncJwt = authState.session?.lastActiveToken?.jwt;
     if (syncJwt != null) {
       print('AuthGate: sync jwt found, setting token');
-      ref.read(clerkTokenProvider.notifier).state = syncJwt;
+      Future.microtask(() {
+        if (mounted) {
+          ref.read(clerkTokenProvider.notifier).state = syncJwt;
+        }
+      });
       return;
     }
 
