@@ -307,6 +307,11 @@ class LessonExercisesScreen extends ConsumerWidget {
                         tooltip: 'Gỡ khỏi bài',
                         onPressed: () => _showDetachVocabDialog(context, ref, vocab),
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+                        tooltip: 'Xóa vĩnh viễn',
+                        onPressed: () => _showDeleteVocabDialog(context, ref, vocab),
+                      ),
                     ],
                   ),
                 ),
@@ -564,6 +569,38 @@ class LessonExercisesScreen extends ConsumerWidget {
                 }
               },
               child: const Text('Gỡ', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteVocabDialog(BuildContext context, WidgetRef ref, VocabularyModel vocab) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Xóa vĩnh viễn từ vựng?'),
+          content: Text('Bạn có chắc chắn muốn xóa từ "${vocab.word}" vĩnh viễn khỏi toàn bộ hệ thống không? Hành động này sẽ gỡ từ khỏi tất cả bài học đang gán.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await ref.read(adminServiceProvider).deleteVocabulary(vocab.id);
+                  ref.invalidate(lessonDetailDataProvider(lesson.id));
+                  ref.invalidate(globalVocabularyProvider);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Lỗi xóa vĩnh viễn từ vựng: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Xóa vĩnh viễn', style: TextStyle(color: Colors.red)),
             ),
           ],
         );

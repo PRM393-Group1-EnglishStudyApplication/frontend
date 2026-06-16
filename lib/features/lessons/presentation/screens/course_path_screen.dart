@@ -309,15 +309,39 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen> with Ticker
                       ),
                       onChanged: (String? newUnitId) {
                         if (newUnitId != null) {
+                          final selectedUnit = units.firstWhere((u) => u.id == newUnitId);
+                          final isUnlocked = ref.read(isUnitUnlockedProvider(selectedUnit));
+                          if (!isUnlocked) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Chương học này đang bị khóa. Hãy hoàn thành các chương trước!'),
+                                backgroundColor: Colors.black87,
+                              ),
+                            );
+                            return;
+                          }
                           ref.read(activeUnitProvider.notifier).state = newUnitId;
                         }
                       },
                       items: units.map((UnitModel unit) {
+                        final isUnlocked = ref.watch(isUnitUnlockedProvider(unit));
                         return DropdownMenuItem<String>(
                           value: unit.id,
-                          child: Text(
-                            unit.title,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                unit.title,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isUnlocked ? null : Colors.black38,
+                                ),
+                              ),
+                              if (!isUnlocked) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.lock_rounded, color: Colors.grey, size: 16),
+                              ],
+                            ],
                           ),
                         );
                       }).toList(),
@@ -380,14 +404,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen> with Ticker
   Widget _buildCurvedPath(BuildContext context, List<LessonModel> lessons) {
     final completedSet = ref.watch(completedLessonsProvider);
 
-    // Identify active lesson index: first uncompleted lesson
-    int activeIndex = -1;
-    for (int i = 0; i < lessons.length; i++) {
-      if (!completedSet.contains(lessons[i].id)) {
-        activeIndex = i;
-        break;
-      }
-    }
+
 
     const double dy = 135.0; // vertical spacing
     final double pathHeight = lessons.length * dy + 80.0;
@@ -432,8 +449,9 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen> with Ticker
                       final y = idx * dy + 40.0;
 
                       final isCompleted = completedSet.contains(lesson.id);
-                      final isActive = idx == activeIndex || (activeIndex == -1 && idx == 0 && !isCompleted);
-                      final isLocked = !isCompleted && !isActive;
+                      final isUnlocked = ref.watch(isLessonUnlockedProvider(lesson));
+                      final isActive = isUnlocked && !isCompleted;
+                      final isLocked = !isUnlocked;
 
                       return Positioned(
                         left: x,

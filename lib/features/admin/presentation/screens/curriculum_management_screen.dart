@@ -63,6 +63,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
               ref.invalidate(coursesDataProvider);
               if (_selectedCourseId != null) {
                 ref.invalidate(curriculumDataProvider(_selectedCourseId!));
+                ref.invalidate(unitsDataProvider(_selectedCourseId!));
               }
             },
           ),
@@ -633,6 +634,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
       }
     } finally {
       ref.invalidate(curriculumDataProvider(courseId));
+      ref.invalidate(unitsDataProvider(courseId));
       if (mounted) {
         setState(() {
           _isSavingOrder = false;
@@ -670,6 +672,9 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
       }
     } finally {
       ref.invalidate(curriculumDataProvider(courseId));
+      if (lessons.isNotEmpty) {
+        ref.invalidate(lessonsDataProvider(lessons.first.unitId));
+      }
       if (mounted) {
         setState(() {
           _isSavingOrder = false;
@@ -720,6 +725,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
                           orderIndex: orderIndex,
                         );
                     ref.invalidate(curriculumDataProvider(courseId));
+                    ref.invalidate(unitsDataProvider(courseId));
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -765,6 +771,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
                           title: title,
                         );
                     ref.invalidate(curriculumDataProvider(unit.courseId));
+                    ref.invalidate(unitsDataProvider(unit.courseId));
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -800,6 +807,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
                 try {
                   await ref.read(adminServiceProvider).deleteUnit(unit.id);
                   ref.invalidate(curriculumDataProvider(unit.courseId));
+                  ref.invalidate(unitsDataProvider(unit.courseId));
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -859,6 +867,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
                           orderIndex: currentLessonsCount + 1,
                           xpReward: xp,
                         );
+                    ref.invalidate(lessonsDataProvider(unitId));
                     if (_selectedCourseId != null) {
                       ref.invalidate(curriculumDataProvider(_selectedCourseId!));
                     }
@@ -921,6 +930,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
                           title: title,
                           xpReward: xp,
                         );
+                    ref.invalidate(lessonsDataProvider(lesson.unitId));
                     if (_selectedCourseId != null) {
                       ref.invalidate(curriculumDataProvider(_selectedCourseId!));
                     }
@@ -958,6 +968,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
                 Navigator.pop(context);
                 try {
                   await ref.read(adminServiceProvider).deleteLesson(lesson.id);
+                  ref.invalidate(lessonsDataProvider(lesson.unitId));
                   if (_selectedCourseId != null) {
                     ref.invalidate(curriculumDataProvider(_selectedCourseId!));
                   }

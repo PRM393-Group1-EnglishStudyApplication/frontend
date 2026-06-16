@@ -300,6 +300,8 @@ class CourseDetailScreen extends ConsumerWidget {
                   itemCount: units.length,
                   itemBuilder: (context, index) {
                     final unit = units[index];
+                    final isUnlocked = ref.watch(isUnitUnlockedProvider(unit));
+                    
                     return Card(
                       elevation: 0,
                       color: Colors.white,
@@ -312,18 +314,25 @@ class CourseDetailScreen extends ConsumerWidget {
                         shape: const Border(),
                         title: Text(
                           unit.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: isUnlocked ? Colors.black87 : Colors.black38,
+                          ),
                         ),
                         leading: CircleAvatar(
-                          backgroundColor: const Color(0xFFD9E2FF),
+                          backgroundColor: isUnlocked ? const Color(0xFFD9E2FF) : const Color(0xFFECEEF0),
                           child: Text(
                             '${index + 1}',
-                            style: const TextStyle(
-                              color: Color(0xFF0055C6),
+                            style: TextStyle(
+                              color: isUnlocked ? const Color(0xFF0055C6) : Colors.black38,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
+                        trailing: isUnlocked
+                            ? null
+                            : const Icon(Icons.lock_rounded, color: Colors.grey),
                         children: [
                           _buildLessonsList(context, ref, unit),
                         ],
@@ -370,6 +379,8 @@ class CourseDetailScreen extends ConsumerWidget {
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final lesson = lessons[index];
+            final isUnlocked = ref.watch(isLessonUnlockedProvider(lesson));
+            
             return ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               leading: CircleAvatar(
@@ -377,16 +388,42 @@ class CourseDetailScreen extends ConsumerWidget {
                 backgroundColor: const Color(0xFFECEEF0),
                 child: Text(
                   '${lesson.orderIndex}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isUnlocked ? Colors.black54 : Colors.black38,
+                  ),
                 ),
               ),
               title: Text(
                 lesson.title,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: isUnlocked ? Colors.black87 : Colors.black38,
+                ),
               ),
-              subtitle: Text('+${lesson.xpReward} XP', style: const TextStyle(fontSize: 12)),
-              trailing: const Icon(Icons.play_arrow_rounded, color: Colors.green),
+              subtitle: Text(
+                '+${lesson.xpReward} XP',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isUnlocked ? Colors.black54 : Colors.black38,
+                ),
+              ),
+              trailing: isUnlocked
+                  ? const Icon(Icons.play_arrow_rounded, color: Colors.green)
+                  : const Icon(Icons.lock_rounded, color: Colors.grey),
               onTap: () {
+                if (!isUnlocked) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Bài học này đang bị khóa. Hãy hoàn thành các bài học trước!'),
+                      backgroundColor: Colors.black87,
+                    ),
+                  );
+                  return;
+                }
+                
                 final heartState = ref.read(heartProvider);
                 if (!heartState.canStartLesson) {
                   showDialog<void>(
