@@ -53,6 +53,8 @@ class ExerciseModel {
   final String question;
   final String exerciseType;
   final String correctAnswer;
+  final String? audioUrl;
+  final String? imageUrl;
   final List<ExerciseOptionModel> options;
 
   const ExerciseModel({
@@ -61,6 +63,8 @@ class ExerciseModel {
     required this.question,
     required this.exerciseType,
     required this.correctAnswer,
+    this.audioUrl,
+    this.imageUrl,
     required this.options,
   });
 
@@ -72,6 +76,8 @@ class ExerciseModel {
       question: json['question'] as String? ?? '',
       exerciseType: json['exercise_type'] as String? ?? 'multiple_choice',
       correctAnswer: json['correct_answer'] as String? ?? '',
+      audioUrl: json['audio_url'] as String?,
+      imageUrl: json['image_url'] as String?,
       options: opts.map((opt) => ExerciseOptionModel.fromJson(opt as Map<String, dynamic>)).toList(),
     );
   }

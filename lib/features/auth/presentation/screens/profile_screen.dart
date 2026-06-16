@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../achievements/presentation/providers/achievements_providers.dart';
 import '../../../achievements/presentation/screens/achievements_screen.dart';
+import '../../../admin/presentation/screens/admin_main_screen.dart';
 import '../providers/auth_providers.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -300,6 +301,29 @@ class ProfileScreen extends ConsumerWidget {
                 _buildFriendRow(context, 'Lan Anh', '2,450 XP', Colors.amber),
                 _buildFriendRow(context, 'Quốc Bảo', '1,890 XP', Colors.grey),
                 const SizedBox(height: 32),
+
+                // Admin Mode Button
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (context) => const AdminMainScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.admin_panel_settings_rounded),
+                  label: const Text('Quản trị khóa học (Admin)'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    foregroundColor: theme.colorScheme.onPrimaryContainer,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 // Sign Out
                 OutlinedButton.icon(
