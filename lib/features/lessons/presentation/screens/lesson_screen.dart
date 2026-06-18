@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../features/auth/presentation/providers/auth_providers.dart';
+import '../../../../features/achievements/presentation/providers/achievements_providers.dart';
 import '../../../../features/hearts/presentation/providers/heart_providers.dart';
+import '../../../../features/leaderboard/presentation/providers/leaderboard_providers.dart';
+import '../../../../features/progress/presentation/providers/progress_providers.dart';
 import '../../data/models/exercise_model.dart';
 import '../../data/models/lesson_model.dart';
+import '../widgets/out_of_hearts_notice_sheet.dart';
 import '../providers/lessons_providers.dart';
 import '../providers/course_providers.dart';
 
@@ -37,7 +41,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lessonDetailAsync = ref.watch(lessonDetailDataProvider(widget.lesson.id));
+    final lessonDetailAsync = ref.watch(
+      lessonDetailDataProvider(widget.lesson.id),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -69,12 +75,20 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 48),
+              Icon(
+                Icons.sync_problem_rounded,
+                color: theme.colorScheme.error,
+                size: 48,
+              ),
               const SizedBox(height: 16),
-              Text('Lỗi tải bài học: $err', style: TextStyle(color: theme.colorScheme.error)),
+              Text(
+                'Lỗi tải bài học: $err',
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
               const SizedBox(height: 16),
               FilledButton.tonal(
-                onPressed: () => ref.invalidate(lessonDetailDataProvider(widget.lesson.id)),
+                onPressed: () =>
+                    ref.invalidate(lessonDetailDataProvider(widget.lesson.id)),
                 child: const Text('Thử lại'),
               ),
             ],
@@ -85,7 +99,10 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   // Vocab Step
-  Widget _buildVocabStep(BuildContext context, List<VocabularyModel> vocabulary) {
+  Widget _buildVocabStep(
+    BuildContext context,
+    List<VocabularyModel> vocabulary,
+  ) {
     final theme = Theme.of(context);
     if (vocabulary.isEmpty) {
       return Center(
@@ -118,7 +135,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           // Step progress indicator
           Text(
             'Học Từ Vựng (${_currentVocabIndex + 1}/${vocabulary.length})',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -127,7 +146,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               shadowColor: Colors.black.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
+                side: BorderSide(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -159,7 +180,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                     const SizedBox(height: 4),
                     Text(
                       vocab.meaning,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -208,7 +231,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                     }
                   },
                   child: Text(
-                    _currentVocabIndex < vocabulary.length - 1 ? 'Từ tiếp theo' : 'Bắt đầu làm bài tập',
+                    _currentVocabIndex < vocabulary.length - 1
+                        ? 'Từ tiếp theo'
+                        : 'Bắt đầu làm bài tập',
                   ),
                 ),
               ),
@@ -220,7 +245,10 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   // Exercise Step
-  Widget _buildExerciseStep(BuildContext context, List<ExerciseModel> exercises) {
+  Widget _buildExerciseStep(
+    BuildContext context,
+    List<ExerciseModel> exercises,
+  ) {
     final theme = Theme.of(context);
     if (exercises.isEmpty) {
       return Center(
@@ -252,7 +280,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               value: (_currentExerciseIndex) / exercises.length,
               minHeight: 8,
               backgroundColor: theme.colorScheme.surfaceVariant,
-              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
+              ),
             ),
           ),
         ),
@@ -263,7 +293,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             children: [
               Text(
                 'Bài tập ${_currentExerciseIndex + 1}/${exercises.length}',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Row(
                 children: [
@@ -294,10 +326,16 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 // Display Question/Prompt
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  color: theme.colorScheme.surfaceVariant.withValues(
+                    alpha: 0.3,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                    side: BorderSide(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -322,13 +360,16 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         ),
 
         // Result check banner
-        if (_isChecked) _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
+        if (_isChecked)
+          _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
 
         // Action button (Check / Continue)
         Padding(
           padding: const EdgeInsets.all(24.0),
           child: FilledButton(
-            onPressed: _isActionEnabled() ? () => _handleActionButton(exercises) : null,
+            onPressed: _isActionEnabled()
+                ? () => _handleActionButton(exercises)
+                : null,
             child: Text(_isChecked ? 'Tiếp tục' : 'Kiểm tra'),
           ),
         ),
@@ -337,13 +378,19 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   bool _isActionEnabled() {
-    if (_isChecked) return true;
-    if (_selectedOptionText != null && _selectedOptionText!.isNotEmpty) return true;
-    if (_currentInputAnswer.trim().isNotEmpty) return true;
+    if (_isChecked) {
+      return true;
+    }
+    if (_selectedOptionText != null && _selectedOptionText!.isNotEmpty) {
+      return true;
+    }
+    if (_currentInputAnswer.trim().isNotEmpty) {
+      return true;
+    }
     return false;
   }
 
-  void _handleActionButton(List<ExerciseModel> exercises) {
+  Future<void> _handleActionButton(List<ExerciseModel> exercises) async {
     final exercise = exercises[_currentExerciseIndex];
     if (!_isChecked) {
       // Perform Check
@@ -354,9 +401,16 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       _userAnswers[exercise.id] = userAnswer;
 
       // Simple normalize and match correct answer
-      final isCorrect = userAnswer.toLowerCase().trim() == exercise.correctAnswer.toLowerCase().trim() ||
+      final isCorrect =
+          userAnswer.toLowerCase().trim() ==
+              exercise.correctAnswer.toLowerCase().trim() ||
           (exercise.exerciseType == 'multiple_choice' &&
-              exercise.options.any((o) => o.optionText.toLowerCase().trim() == userAnswer.toLowerCase().trim() && o.isCorrect));
+              exercise.options.any(
+                (o) =>
+                    o.optionText.toLowerCase().trim() ==
+                        userAnswer.toLowerCase().trim() &&
+                    o.isCorrect,
+              ));
 
       setState(() {
         _isChecked = true;
@@ -366,7 +420,20 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       if (!isCorrect) {
         // Keep the exercise feedback responsive. The submit response remains
         // the source of truth and reconciles the count with the backend.
-        ref.read(heartProvider.notifier).deductHeartOnError();
+        final bool canContinue = await ref
+            .read(heartProvider.notifier)
+            .deductHeartOnError();
+        if (!canContinue && mounted) {
+          final OutOfHeartsNoticeAction? action =
+              await showOutOfHeartsNoticeSheet(context);
+          if (!mounted) {
+            return;
+          }
+          if (action == OutOfHeartsNoticeAction.exited) {
+            Navigator.of(context).pop();
+            return;
+          }
+        }
       }
     } else {
       // Continue to next or submit
@@ -385,23 +452,32 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   // Multiple choice option list
-  Widget _buildMultipleChoiceInput(ThemeData theme, List<ExerciseOptionModel> options) {
+  Widget _buildMultipleChoiceInput(
+    ThemeData theme,
+    List<ExerciseOptionModel> options,
+  ) {
     return Column(
       children: options.map((opt) {
         final isSelected = _selectedOptionText == opt.optionText;
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4) : theme.colorScheme.surface,
+            color: isSelected
+                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
+                : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
               width: isSelected ? 1.5 : 1,
             ),
           ),
           child: ListTile(
             enabled: !_isChecked,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Text(
               opt.optionText,
               style: TextStyle(
@@ -446,9 +522,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       decoration: InputDecoration(
         labelText: 'Nhập câu trả lời của bạn',
         hintText: 'Nhập bản dịch hoặc từ còn thiếu...',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -515,12 +589,16 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           const SizedBox(height: 24),
           Text(
             'Đang phân tích kết quả...',
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Chờ chút nhé, hệ thống đang chấm điểm bài làm.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -548,7 +626,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           const SizedBox(height: 16),
           Text(
             success ? 'Bài học Hoàn thành!' : 'Cố gắng lên nhé!',
-            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -556,7 +636,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             success
                 ? 'Bạn đã làm rất xuất sắc và vượt qua bài học!'
                 : 'Điểm số chưa đủ 70% để vượt qua bài học này. Hãy thử lại!',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -566,21 +648,33 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              side: BorderSide(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildResultItem(context, 'Điểm số', '${res.score}%', theme.colorScheme.primary),
+                  _buildResultItem(
+                    context,
+                    'Điểm số',
+                    '${res.score}%',
+                    theme.colorScheme.primary,
+                  ),
                   _buildResultItem(
                     context,
                     'Đúng / Tổng',
                     '${res.correctAnswers}/${res.totalQuestions}',
                     Colors.green,
                   ),
-                  _buildResultItem(context, 'Kinh nghiệm', '+${res.earnedXp} XP', Colors.orange),
+                  _buildResultItem(
+                    context,
+                    'Kinh nghiệm',
+                    '+${res.earnedXp} XP',
+                    Colors.orange,
+                  ),
                 ],
               ),
             ),
@@ -589,11 +683,14 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
 
           // Continue Button
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               // Reload user details and go back
-              ref.read(currentUserProvider.notifier).loadUser();
-              ref.read(heartProvider.notifier).updateHeartCount(res.currentHearts);
-              
+              await ref.read(currentUserProvider.notifier).loadUser();
+              await ref.read(heartProvider.notifier).loadHearts();
+              if (!context.mounted) {
+                return;
+              }
+
               Navigator.of(context).pop();
             },
             child: const Text('Hoàn thành'),
@@ -603,13 +700,20 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     );
   }
 
-  Widget _buildResultItem(BuildContext context, String label, String value, Color valueColor) {
+  Widget _buildResultItem(
+    BuildContext context,
+    String label,
+    String value,
+    Color valueColor,
+  ) {
     final theme = Theme.of(context);
     return Column(
       children: [
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -630,18 +734,29 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       _isSubmitting = true;
     });
 
-    final List<Map<String, dynamic>> answersList = _userAnswers.entries.map((e) {
-      return <String, dynamic>{
-        'exerciseId': e.key,
-        'userAnswer': e.value,
-      };
+    final List<Map<String, dynamic>> answersList = _userAnswers.entries.map((
+      e,
+    ) {
+      return <String, dynamic>{'exerciseId': e.key, 'userAnswer': e.value};
     }).toList();
 
     try {
       final repository = ref.read(lessonsRepositoryProvider);
       final res = await repository.submitLesson(widget.lesson.id, answersList);
-      await ref.read(heartProvider.notifier).updateHeartCount(res.currentHearts);
-      ref.read(completedLessonsProvider.notifier).markAsCompleted(widget.lesson.id);
+      await ref.read(heartProvider.notifier).loadHearts();
+      ref
+          .read(completedLessonsProvider.notifier)
+          .markAsCompleted(widget.lesson.id);
+      ref.invalidate(progressEntriesProvider);
+      ref.invalidate(progressSummaryProvider);
+      await ref.read(completedLessonsProvider.notifier).reloadFromApi();
+      await ref.read(currentUserProvider.notifier).loadUser();
+      ref.invalidate(allAchievementsDataProvider);
+      ref.invalidate(myAchievementsDataProvider);
+      ref.invalidate(combinedAchievementsProvider);
+      ref.invalidate(leaderboardDataProvider);
+      ref.invalidate(myLeaderboardProvider);
+      ref.invalidate(leaderboardViewProvider);
 
       setState(() {
         _result = res;
@@ -659,9 +774,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         _isDoingExercises = true; // Rollback to let them retry nộp bài
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi nộp bài làm: $err')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi nộp bài làm: $err')));
       }
     }
   }
@@ -691,7 +806,10 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(

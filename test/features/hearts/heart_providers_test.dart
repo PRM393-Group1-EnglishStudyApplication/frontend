@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:prm_frontend/features/hearts/domain/entities/heart_status.dart';
 import 'package:prm_frontend/features/hearts/domain/repositories/heart_repository.dart';
 import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeHeartRepository implements HeartRepository {
   HeartStatus hearts;
@@ -14,6 +13,13 @@ class FakeHeartRepository implements HeartRepository {
   @override
   Future<HeartStatus> getMyHearts() async {
     getCallCount++;
+    if (getCallCount > 1 && hearts.nextRefillAt != null) {
+      hearts = hearts.copyWith(
+        currentHearts: (hearts.currentHearts + 1).clamp(0, hearts.maxHearts),
+        nextRefillAt: DateTime(2026, 6, 15, 8, 10),
+        secondsUntilNextRefill: 600,
+      );
+    }
     return hearts;
   }
 
@@ -34,10 +40,14 @@ void main() {
   late HeartNotifier notifier;
 
   setUp(() {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
     now = DateTime(2026, 6, 15, 8);
     repository = FakeHeartRepository(
-      const HeartStatus(userId: 'user_123', currentHearts: 2, maxHearts: 5),
+      const HeartStatus(
+        userId: 'user_123',
+        currentHearts: 2,
+        maxHearts: 5,
+        secondsUntilNextRefill: 600,
+      ),
     );
     notifier = HeartNotifier(repository, null, now: () => now);
   });
@@ -46,11 +56,11 @@ void main() {
     notifier.dispose();
   });
 
-  test('loads hearts and starts a five-hour refill countdown', () async {
+  test('loads hearts and uses server-provided refill countdown', () async {
     await notifier.loadHearts();
 
     expect(notifier.state.hearts?.currentHearts, 2);
-    expect(notifier.state.refillRemaining, heartRefillDuration);
+    expect(notifier.state.refillRemaining, const Duration(minutes: 10));
     expect(notifier.state.canStartLesson, isTrue);
   });
 
@@ -84,17 +94,18 @@ void main() {
     expect(notifier.state.refillRemaining, isNull);
   });
 
-  test('expired timer automatically calls backend refill', () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      'heart_refill_deadline_user_123': now
-          .subtract(const Duration(seconds: 1))
-          .toIso8601String(),
-    });
+  test('expired timer reloads hearts from backend', () async {
+    repository.hearts = HeartStatus(
+      userId: 'user_123',
+      currentHearts: 2,
+      maxHearts: 5,
+      nextRefillAt: now.subtract(const Duration(seconds: 1)),
+    );
 
     await notifier.loadHearts();
     await Future<void>.delayed(Duration.zero);
 
-    expect(repository.refillCallCount, 1);
-    expect(notifier.state.hearts?.currentHearts, 5);
+    expect(repository.getCallCount, greaterThanOrEqualTo(2));
+    expect(repository.refillCallCount, 0);
   });
 }

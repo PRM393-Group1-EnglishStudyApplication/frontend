@@ -129,9 +129,37 @@ class MockDioInterceptor extends Interceptor {
           'message': 'success',
           'data': {
             'user_id': 'user_123',
-            'current_hearts': 5,
-            'max_hearts': 5,
+            'current_hearts': 15,
+            'max_hearts': 15,
+            'seconds_until_next_refill': 600,
           },
+        },
+      ));
+      return;
+    }
+    if (path.contains('/api/progress/me')) {
+      handler.resolve(Response<Map<String, dynamic>>(
+        requestOptions: options,
+        statusCode: 200,
+        data: <String, dynamic>{
+          'success': true,
+          'message': 'success',
+          'data': [
+            {
+              '_id': 'progress_1',
+              'user_id': 'user_123',
+              'lesson_id': 'lesson_1',
+              'is_completed': true,
+              'score': 80,
+              'earned_xp': 10,
+              'completed_at': '2026-06-18T08:00:00.000Z',
+              'lesson': {
+                '_id': 'lesson_1',
+                'title': 'Basics 1',
+                'xp_reward': 10,
+              },
+            }
+          ],
         },
       ));
       return;
@@ -336,8 +364,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(find.text('John Doe'), findsOneWidget);
-    expect(find.text('Bạn (Bạn)'), findsWidgets);
+    expect(find.text('John Doe'), findsWidgets);
+    expect(find.text('You'), findsWidgets);
   });
 
   testWidgets('Tapping Practice tab displays practice dashboard', (
@@ -350,10 +378,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(find.text('Luyện tập (Personal Insights)'), findsOneWidget);
-    expect(find.text('Practice Streak'), findsOneWidget);
-    expect(find.text('Từ vựng'), findsOneWidget);
-    expect(find.text('Cần xem lại'), findsOneWidget);
+    expect(find.text('Practice insights'), findsOneWidget);
+    expect(find.text('Streak'), findsOneWidget);
+    expect(find.text('Bai hoan thanh'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Can xem lai'), findsOneWidget);
   });
 
   testWidgets('Tapping Profile tab displays profile card and sign-out button', (
@@ -367,8 +397,10 @@ void main() {
     }
 
     expect(find.text('Jane Doe'), findsOneWidget);
-    expect(find.text('Đăng xuất'), findsOneWidget);
-    expect(find.text('Chuỗi ngày'), findsOneWidget);
-    expect(find.text('Tổng XP'), findsOneWidget);
+    expect(find.text('Streak'), findsOneWidget);
+    expect(find.text('Total XP'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out'), findsOneWidget);
   });
 }

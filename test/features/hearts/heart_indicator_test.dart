@@ -6,7 +6,6 @@ import 'package:prm_frontend/features/hearts/domain/entities/heart_status.dart';
 import 'package:prm_frontend/features/hearts/domain/repositories/heart_repository.dart';
 import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
 import 'package:prm_frontend/features/hearts/presentation/widgets/heart_indicator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeHeartRepository implements HeartRepository {
   HeartStatus hearts;
@@ -24,15 +23,16 @@ class FakeHeartRepository implements HeartRepository {
 }
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-  });
-
   testWidgets('shows heart count and opens refill details', (
     WidgetTester tester,
   ) async {
     final FakeHeartRepository repository = FakeHeartRepository(
-      const HeartStatus(userId: 'user_123', currentHearts: 3, maxHearts: 5),
+      const HeartStatus(
+        userId: 'user_123',
+        currentHearts: 3,
+        maxHearts: 15,
+        secondsUntilNextRefill: 600,
+      ),
     );
 
     await tester.pumpWidget(
@@ -57,7 +57,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Your hearts'), findsOneWidget);
-    expect(find.text('Full refill in'), findsOneWidget);
+    expect(find.text('Next refill sync in'), findsOneWidget);
+    expect(find.text('3 / 15 hearts'), findsOneWidget);
     expect(find.byKey(const Key('refill_hearts_button')), findsOneWidget);
   });
 }

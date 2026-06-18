@@ -5,63 +5,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../achievements/presentation/providers/achievements_providers.dart';
 import '../../../achievements/presentation/screens/achievements_screen.dart';
 import '../../../admin/presentation/screens/admin_main_screen.dart';
+import '../../../leaderboard/presentation/providers/leaderboard_providers.dart';
+import '../../../progress/presentation/providers/progress_providers.dart';
+import '../../../progress/presentation/screens/progress_screen.dart';
 import '../providers/auth_providers.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
-
-  IconData _getAchievementIcon(String? iconName) {
-    if (iconName == null) return Icons.military_tech_rounded;
-    switch (iconName.toLowerCase()) {
-      case 'military_tech':
-        return Icons.military_tech_rounded;
-      case 'local_fire_department':
-        return Icons.local_fire_department_rounded;
-      case 'workspace_premium':
-        return Icons.workspace_premium_rounded;
-      case 'bolt':
-        return Icons.bolt_rounded;
-      case 'diamond':
-        return Icons.diamond_rounded;
-      default:
-        return Icons.military_tech_rounded;
-    }
-  }
-
-  Color _getAchievementColor(String? iconName) {
-    if (iconName == null) return Colors.amber;
-    switch (iconName.toLowerCase()) {
-      case 'local_fire_department':
-        return Colors.deepOrange;
-      case 'bolt':
-        return Colors.amber;
-      case 'diamond':
-        return Colors.blue;
-      case 'workspace_premium':
-        return Colors.amber.shade700;
-      default:
-        return Colors.amber;
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final userAsync = ref.watch(currentUserProvider);
     final achievementsAsync = ref.watch(combinedAchievementsProvider);
+    final myRankAsync = ref.watch(myLeaderboardProvider);
+    final progressAsync = ref.watch(progressSummaryProvider);
 
     return Scaffold(
       body: userAsync.when(
         data: (user) {
-          final String fullName = user.fullName ?? 'Học viên';
+          final String fullName = user.fullName ?? 'Hoc vien';
           final String? avatarUrl = user.avatarUrl;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // User Details Card
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(currentUserProvider.notifier).loadUser();
+              ref.invalidate(myLeaderboardProvider);
+              ref.invalidate(combinedAchievementsProvider);
+              ref.invalidate(progressSummaryProvider);
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: <Widget>[
                 Card(
                   elevation: 0,
                   color: theme.colorScheme.primaryContainer.withAlpha(75),
@@ -72,46 +47,28 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       children: <Widget>[
-                        // Avatar with Edit Button overlay
-                        Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            CircleAvatar(
-                              radius: 48,
-                              backgroundColor: theme.colorScheme.primary,
-                              backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                                  ? NetworkImage(avatarUrl)
-                                  : null,
-                              child: avatarUrl == null || avatarUrl.isEmpty
-                                  ? Text(
-                                      fullName.isNotEmpty ? fullName.substring(0, 1).toUpperCase() : 'U',
-                                      style: theme.textTheme.headlineLarge?.copyWith(
-                                        color: theme.colorScheme.onPrimary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: theme.colorScheme.surface, width: 2),
-                              ),
-                              child: const Icon(
-                                Icons.edit_rounded,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: theme.colorScheme.primary,
+                          backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl == null || avatarUrl.isEmpty
+                              ? Text(
+                                  fullName.isNotEmpty
+                                      ? fullName.substring(0, 1).toUpperCase()
+                                      : 'U',
+                                  style: theme.textTheme.headlineLarge?.copyWith(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
                         ),
                         const SizedBox(height: 16),
-                        // Full Name
                         Text(
                           fullName,
                           style: theme.textTheme.titleLarge?.copyWith(
@@ -120,9 +77,8 @@ class ProfileScreen extends ConsumerWidget {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 4),
-                        // Joined Date or Email
                         Text(
-                          'Tham gia từ Tháng 8, 2023',
+                          user.email,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -133,175 +89,152 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Stats Row Grid
                 Row(
-                  children: [
+                  children: <Widget>[
                     Expanded(
-                      child: _buildStatCard(
-                        context,
+                      child: _StatCard(
                         icon: Icons.local_fire_department_rounded,
                         color: Colors.deepOrange,
-                        label: 'Chuỗi ngày',
+                        label: 'Streak',
                         value: '${user.streakCount}',
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildStatCard(
-                        context,
+                      child: _StatCard(
                         icon: Icons.diamond_rounded,
                         color: Colors.blue,
-                        label: 'Tổng XP',
+                        label: 'Total XP',
                         value: '${user.totalXp}',
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildStatCard(
-                        context,
-                        icon: Icons.emoji_events_rounded,
-                        color: Colors.amber.shade700,
-                        label: 'Giải đấu',
-                        value: 'Vàng',
+                      child: myRankAsync.when(
+                        data: (entry) => _StatCard(
+                          icon: Icons.emoji_events_rounded,
+                          color: Colors.amber.shade700,
+                          label: 'Weekly rank',
+                          value: entry.rankPosition > 0
+                              ? '#${entry.rankPosition}'
+                              : 'Unranked',
+                        ),
+                        loading: () => _StatCard(
+                          icon: Icons.emoji_events_rounded,
+                          color: Colors.amber.shade700,
+                          label: 'Weekly rank',
+                          value: '--',
+                        ),
+                        error: (_, __) => _StatCard(
+                          icon: Icons.emoji_events_rounded,
+                          color: Colors.amber.shade700,
+                          label: 'Weekly rank',
+                          value: 'Error',
+                        ),
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.insights_rounded),
+                    title: const Text('Learning progress'),
+                    subtitle: progressAsync.when(
+                      data: (summary) => Text(
+                        '${summary.completedLessons} completed lessons - ${summary.averageScore == 0 ? '--' : '${summary.averageScore}%'} average score',
+                      ),
+                      loading: () => const Text('Loading progress...'),
+                      error: (_, __) => const Text('Unable to sync progress'),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (context) => const ProgressScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: 24),
-
-                // Achievements Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Thành tích',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                _SectionHeader(
+                  title: 'Achievements',
+                  actionLabel: 'View all',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (context) => const AchievementsScreen(),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (context) => const AchievementsScreen(),
-                          ),
-                        );
-                      },
-                      child: const Row(
-                        children: [
-                          Text('Xem tất cả'),
-                          Icon(Icons.chevron_right_rounded, size: 16),
-                        ],
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
-
-                // First 2 Achievements List
                 achievementsAsync.when(
                   data: (achievements) {
-                    final unlocked = achievements.where((a) => a.isUnlocked).take(2).toList();
+                    final unlocked =
+                        achievements.where((item) => item.isUnlocked).take(2).toList();
                     if (unlocked.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          'Hoàn thành bài học để mở khóa thành tích đầu tiên!',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
+                      return Text(
+                        'Complete lessons to unlock your first achievement.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
                         ),
                       );
                     }
+
                     return Row(
-                      children: unlocked.map((achievement) {
-                        final color = _getAchievementColor(achievement.iconUrl);
-                        return Expanded(
-                          child: Card(
-                            elevation: 0,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: theme.colorScheme.outlineVariant.withAlpha(127),
+                      children: unlocked
+                          .map(
+                            (achievement) => Expanded(
+                              child: Card(
+                                elevation: 0,
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    children: <Widget>[
+                                      Icon(
+                                        _achievementIcon(achievement.iconUrl),
+                                        color: _achievementColor(achievement.iconUrl),
+                                        size: 30,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        achievement.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${achievement.requiredXp} XP',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    _getAchievementIcon(achievement.iconUrl),
-                                    color: color,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          achievement.name,
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          'Cấp độ ${achievement.requiredXp ~/ 100 > 0 ? achievement.requiredXp ~/ 100 : 1}',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                          )
+                          .toList(),
                     );
                   },
-                  loading: () => const Center(child: LinearProgressIndicator()),
-                  error: (_, __) => const SizedBox.shrink(),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => const Text('Unable to load achievements'),
                 ),
-                const SizedBox(height: 24),
-
-                // Friends Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Bạn bè',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Thêm bạn bè...')),
-                        );
-                      },
-                      icon: const Icon(Icons.person_add_rounded, size: 16),
-                      label: const Text('Thêm'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Friends List
-                _buildFriendRow(context, 'Lan Anh', '2,450 XP', Colors.amber),
-                _buildFriendRow(context, 'Quốc Bảo', '1,890 XP', Colors.grey),
-                const SizedBox(height: 32),
-
-                // Admin Mode Button
+                const SizedBox(height: 28),
                 FilledButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -312,19 +245,9 @@ class ProfileScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.admin_panel_settings_rounded),
-                  label: const Text('Quản trị khóa học (Admin)'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    foregroundColor: theme.colorScheme.onPrimaryContainer,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  label: const Text('Admin course management'),
                 ),
-                const SizedBox(height: 16),
-
-                // Sign Out
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () async {
                     try {
@@ -338,7 +261,7 @@ class ProfileScreen extends ConsumerWidget {
                     }
                   },
                   icon: const Icon(Icons.logout_rounded),
-                  label: const Text('Đăng xuất'),
+                  label: const Text('Sign out'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: theme.colorScheme.error,
                     side: BorderSide(color: theme.colorScheme.error.withAlpha(127)),
@@ -350,52 +273,98 @@ class ProfileScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'Lỗi đồng bộ hồ sơ: $err',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.tonal(
-                onPressed: () => ref.read(currentUserProvider.notifier).loadUser(),
-                child: const Text('Tải lại'),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  Icons.sync_problem_rounded,
+                  color: theme.colorScheme.error,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Unable to sync profile: $err',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonal(
+                  onPressed: () => ref.read(currentUserProvider.notifier).loadUser(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String label,
-    required String value,
-  }) {
+  IconData _achievementIcon(String? iconName) {
+    switch (iconName?.toLowerCase()) {
+      case 'local_fire_department':
+        return Icons.local_fire_department_rounded;
+      case 'workspace_premium':
+        return Icons.workspace_premium_rounded;
+      case 'bolt':
+        return Icons.bolt_rounded;
+      case 'diamond':
+        return Icons.diamond_rounded;
+      default:
+        return Icons.military_tech_rounded;
+    }
+  }
+
+  Color _achievementColor(String? iconName) {
+    switch (iconName?.toLowerCase()) {
+      case 'local_fire_department':
+        return Colors.deepOrange;
+      case 'bolt':
+        return Colors.amber;
+      case 'diamond':
+        return Colors.blue;
+      case 'workspace_premium':
+        return Colors.amber;
+      default:
+        return Colors.amber;
+    }
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+
+  const _StatCard({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withAlpha(127),
-        ),
+        side: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(127)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         child: Column(
-          children: [
+          children: <Widget>[
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
             Text(
               value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -403,6 +372,8 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 2),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -412,53 +383,37 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildFriendRow(BuildContext context, String name, String xp, Color badgeColor) {
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String actionLabel;
+  final VoidCallback onPressed;
+
+  const _SectionHeader({
+    required this.title,
+    required this.actionLabel,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withAlpha(127),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: theme.colorScheme.surfaceVariant,
-            child: Text(
-              name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'F',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              name,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Icon(
-            Icons.workspace_premium_rounded,
-            color: badgeColor,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            xp,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
+        TextButton.icon(
+          onPressed: onPressed,
+          label: Text(actionLabel),
+          icon: const Icon(Icons.chevron_right_rounded, size: 16),
+        ),
+      ],
     );
   }
 }
