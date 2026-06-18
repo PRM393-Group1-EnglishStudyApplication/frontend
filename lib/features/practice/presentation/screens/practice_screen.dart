@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/practice_providers.dart';
+import '../../../lessons/presentation/providers/favorites_provider.dart';
+import '../../../lessons/presentation/screens/favorite_vocab_screen.dart';
 
 class PracticeScreen extends ConsumerWidget {
   const PracticeScreen({super.key});
@@ -117,6 +118,45 @@ class PracticeScreen extends ConsumerWidget {
               accuracyAsync.maybeWhen(
                 data: (pct) => '$pct%',
                 orElse: () => '--%',
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Favorite Vocabulary Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
+              ),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.amber.shade100,
+                  child: const Icon(Icons.star_rounded, color: Colors.amber),
+                ),
+                title: const Text(
+                  'Từ vựng yêu thích',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Consumer(
+                  builder: (context, ref, child) {
+                    final favsAsync = ref.watch(favoriteVocabulariesProvider);
+                    return favsAsync.maybeWhen(
+                      data: (list) => Text('${list.length} từ đã lưu'),
+                      orElse: () => const Text('-- từ đã lưu'),
+                    );
+                  },
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => const FavoriteVocabScreen(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 28),
