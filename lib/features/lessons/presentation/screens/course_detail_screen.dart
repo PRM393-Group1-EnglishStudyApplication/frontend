@@ -32,19 +32,21 @@ class CourseDetailScreen extends ConsumerWidget {
     final unitsAsync = ref.watch(unitsDataProvider(course.id));
     final activeCourse = ref.watch(activeCourseProvider);
     final isActive = activeCourse?.id == course.id;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+      backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colors.surface,
         elevation: 0.5,
         title: Text(
           course.title,
-          style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF0055C6)),
+          style: TextStyle(fontWeight: FontWeight.w800, color: colors.primary),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0055C6)),
+          icon: Icon(Icons.arrow_back_rounded, color: colors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -70,7 +72,7 @@ class CourseDetailScreen extends ConsumerWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
@@ -86,13 +88,13 @@ class CourseDetailScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFD9D06),
+                          color: colors.secondary,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Khóa học mới',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.onSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -130,24 +132,24 @@ class CourseDetailScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16.0),
               child: Card(
                 elevation: 0,
-                color: Colors.white,
+                color: colors.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.withOpacity(0.15)),
+                  side: BorderSide(color: colors.outlineVariant),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Học phí', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                          const Text('Học phí', style: TextStyle(color: Colors.black54, fontSize: 12)),
                           Text(
                             'Miễn phí',
                             style: TextStyle(
-                              color: Color(0xFF0055C6),
+                              color: colors.primary,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -170,7 +172,7 @@ class CourseDetailScreen extends ConsumerWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Đã kích hoạt khóa học: ${course.title}'),
-                                backgroundColor: const Color(0xFF008733),
+                                backgroundColor: Colors.green.shade600,
                               ),
                             );
                             // Pop back to home screen
@@ -178,7 +180,6 @@ class CourseDetailScreen extends ConsumerWidget {
                           }
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF0055C6),
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
@@ -224,13 +225,13 @@ class CourseDetailScreen extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFECEEF0),
+                        color: colors.surfaceContainer,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.menu_book_rounded, color: Color(0xFF0055C6)),
+                          Icon(Icons.menu_book_rounded, color: colors.primary),
                           const SizedBox(height: 12),
                           unitsAsync.maybeWhen(
                             data: (units) => Text(
@@ -252,19 +253,19 @@ class CourseDetailScreen extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFECEEF0),
+                        color: colors.surfaceContainer,
                         borderRadius: BorderRadius.circular(16),
-                        border: const Border(
-                          bottom: BorderSide(color: Color(0xFF53E16F), width: 3),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.green.shade400, width: 3),
                         ),
                       ),
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.check_circle_rounded, color: Color(0xFF008733)),
-                          SizedBox(height: 12),
-                          Text('Mastery', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text('300+ Từ vựng', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                          Icon(Icons.check_circle_rounded, color: Colors.green.shade600),
+                          const SizedBox(height: 12),
+                          const Text('Mastery', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          const Text('300+ Từ vựng', style: TextStyle(color: Colors.black54, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -304,11 +305,11 @@ class CourseDetailScreen extends ConsumerWidget {
                     
                     return Card(
                       elevation: 0,
-                      color: Colors.white,
+                      color: colors.surface,
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.withOpacity(0.15)),
+                        side: BorderSide(color: colors.outlineVariant),
                       ),
                       child: ExpansionTile(
                         shape: const Border(),
@@ -317,15 +318,15 @@ class CourseDetailScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: isUnlocked ? Colors.black87 : Colors.black38,
+                            color: isUnlocked ? colors.onSurface : colors.onSurfaceVariant.withValues(alpha: 0.5),
                           ),
                         ),
                         leading: CircleAvatar(
-                          backgroundColor: isUnlocked ? const Color(0xFFD9E2FF) : const Color(0xFFECEEF0),
+                          backgroundColor: isUnlocked ? colors.primaryContainer : colors.surfaceContainerHighest,
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: isUnlocked ? const Color(0xFF0055C6) : Colors.black38,
+                              color: isUnlocked ? colors.primary : colors.onSurfaceVariant.withValues(alpha: 0.5),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -361,6 +362,7 @@ class CourseDetailScreen extends ConsumerWidget {
 
   Widget _buildLessonsList(BuildContext context, WidgetRef ref, UnitModel unit) {
     final lessonsAsync = ref.watch(lessonsDataProvider(unit.id));
+    final colors = Theme.of(context).colorScheme;
     
     return lessonsAsync.when(
       data: (lessons) {
@@ -385,13 +387,13 @@ class CourseDetailScreen extends ConsumerWidget {
               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               leading: CircleAvatar(
                 radius: 16,
-                backgroundColor: const Color(0xFFECEEF0),
+                backgroundColor: colors.surfaceContainer,
                 child: Text(
                   '${lesson.orderIndex}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isUnlocked ? Colors.black54 : Colors.black38,
+                    color: isUnlocked ? colors.onSurfaceVariant : colors.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -400,14 +402,14 @@ class CourseDetailScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: isUnlocked ? Colors.black87 : Colors.black38,
+                  color: isUnlocked ? colors.onSurface : colors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ),
               subtitle: Text(
                 '+${lesson.xpReward} XP',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isUnlocked ? Colors.black54 : Colors.black38,
+                  color: isUnlocked ? colors.onSurfaceVariant : colors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ),
               trailing: isUnlocked
