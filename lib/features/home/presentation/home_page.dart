@@ -1,17 +1,58 @@
+import 'dart:math' as math;
+
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../auth/domain/entities/app_user.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../../auth/presentation/screens/profile_screen.dart';
-import '../../hearts/presentation/providers/heart_providers.dart';
-import '../../hearts/presentation/widgets/heart_indicator.dart';
-import '../../leaderboard/presentation/screens/leaderboard_screen.dart';
-import '../../lessons/data/models/course_model.dart';
-import '../../lessons/presentation/providers/lessons_providers.dart';
-import '../../lessons/presentation/screens/course_detail_screen.dart';
-import '../../practice/presentation/screens/practice_screen.dart';
+import '../../../routes/app_routes.dart';
+
+const Color _kPrimary = Color(0xFF0055C6);
+const Color _kOrange = Color(0xFFFD9D06);
+const Color _kGreen = Color(0xFF008733);
+const Color _kRed = Color(0xFFFF4B4B);
+
+// ── Providers ──────────────────────────────────────────────────────────────
+
+/// Fetches enrolled course detail with nested units+lessons from backend.
+final _enrolledCourseProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
+      final prefs = await SharedPreferences.getInstance();
+      final courseId = prefs.getString('enrolled_course_id');
+      if (courseId == null) return null;
+      final dio = ref.watch(authDioProvider);
+      final response = await dio.get<Map<String, dynamic>>(
+        '/api/courses/$courseId',
+      );
+      return response.data?['data'] as Map<String, dynamic>?;
+    });
+
+/// Fetches the set of lesson IDs the current user has completed.
+final _completedLessonsProvider = FutureProvider.autoDispose<Set<String>>((
+  ref,
+) async {
+  final token = ref.watch(clerkTokenProvider);
+  if (token == null) return const {};
+  try {
+    final dio = ref.watch(authDioProvider);
+    final response = await dio.get<Map<String, dynamic>>('/api/progress/me');
+    final list = (response.data?['data'] as List<dynamic>?) ?? [];
+    final completed = <String>{};
+    for (final item in list) {
+      if (item['is_completed'] == true) {
+        final id = item['lesson_id'] as String?;
+        if (id != null && id.isNotEmpty) completed.add(id);
+      }
+    }
+    return completed;
+  } catch (_) {
+    return const {};
+  }
+});
+
+// ── Home page ──────────────────────────────────────────────────────────────
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -20,795 +61,855 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> {
-  int _currentIndex = 0;
+class _HomePageState extends ConsumerState<HomePage>
+    with TickerProviderStateMixin {
+  int _navIndex = 0;
 
-  String _getAppBarTitle() {
-    switch (_currentIndex) {
-      case 0:
-        return 'Học';
-      case 1:
-        return 'Luyện tập';
-      case 2:
-        return 'Bảng xếp hạng';
-      case 3:
-        return 'Hồ sơ';
-      default:
-        return 'PRM Learning';
-    }
+  late final AnimationController _pulseCtrl;
+  late final AnimationController _floatCtrl;
+  late final AnimationController _pathCtrl;
+
+  late final Animation<double> _pulse;
+  late final Animation<double> _float;
+  late final Animation<double> _path;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _floatCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
+    _pathCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+
+    _pulse = Tween<double>(
+      begin: 1.0,
+      end: 1.08,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _float = Tween<double>(
+      begin: 0.0,
+      end: -10.0,
+    ).animate(CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut));
+    _path = Tween<double>(begin: 0.0, end: 1.0).animate(_pathCtrl);
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    _floatCtrl.dispose();
+    _pathCtrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_getAppBarTitle()),
-        centerTitle: true,
-        actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
-      ),
-      body: Builder(
-        builder: (context) {
-          switch (_currentIndex) {
-            case 0:
-              return _buildCoursesTab(context);
-            case 1:
-              return const PracticeScreen();
-            case 2:
-              return const LeaderboardScreen();
-            case 3:
-              return const ProfileScreen();
-            default:
-              return const SizedBox.shrink();
-          }
-        },
+      backgroundColor: const Color(0xFFF7F7F7),
+      body: IndexedStack(
+        index: _navIndex,
+        children: [
+          _LearnTab(pulse: _pulse, float: _float, path: _path),
+          const _PlaceholderTab(
+            icon: Icons.bar_chart_rounded,
+            label: 'Leaderboard',
+          ),
+          const _PlaceholderTab(icon: Icons.shield_rounded, label: 'Quests'),
+          _ProfileTab(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const <Widget>[
+        selectedIndex: _navIndex,
+        onDestinationSelected: (i) => setState(() => _navIndex = i),
+        backgroundColor: Colors.white,
+        destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: 'Học',
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home, color: _kPrimary),
+            label: 'Learn',
           ),
           NavigationDestination(
-            icon: Icon(Icons.auto_stories_outlined),
-            selectedIcon: Icon(Icons.auto_stories),
-            label: 'Luyện tập',
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart_rounded, color: _kPrimary),
+            label: 'Leaderboard',
           ),
           NavigationDestination(
-            icon: Icon(Icons.leaderboard_outlined),
-            selectedIcon: Icon(Icons.leaderboard),
-            label: 'Xếp hạng',
+            icon: Icon(Icons.shield_outlined),
+            selectedIcon: Icon(Icons.shield_rounded, color: _kPrimary),
+            label: 'Quests',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outlined),
-            selectedIcon: Icon(Icons.person),
-            label: 'Hồ sơ',
+            selectedIcon: Icon(Icons.person_rounded, color: _kPrimary),
+            label: 'Profile',
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildHomeTab(BuildContext context) {
-    final theme = Theme.of(context);
-    final clerkUser = ClerkAuth.of(context).user;
-    final String fullName =
-        (clerkUser?.name != null && clerkUser!.name.isNotEmpty)
-        ? clerkUser.name
-        : 'PRM Student';
+// ── Learn tab ──────────────────────────────────────────────────────────────
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Greeting Card
-          Card(
-            elevation: 0,
-            color: theme.colorScheme.primaryContainer,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back,',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withValues(
-                        alpha: 0.7,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    fullName,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "You're making great progress! Ready to learn something new today?",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Quick Learning Summary
-          Text(
-            'Quick Summary',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final userAsync = ref.watch(currentUserProvider);
-                  return userAsync.when(
-                    data: (user) => Column(
-                      children: [
-                        _buildSummaryRow(
-                          context,
-                          icon: Icons.star_rounded,
-                          color: Colors.amber,
-                          title: 'Current Level',
-                          value: user.currentLevel.toUpperCase(),
-                        ),
-                        const Divider(height: 24),
-                        _buildSummaryRow(
-                          context,
-                          icon: Icons.local_fire_department_rounded,
-                          color: Colors.deepOrange,
-                          title: 'Streak',
-                          value: '${user.streakCount} Days',
-                        ),
-                        const Divider(height: 24),
-                        _buildSummaryRow(
-                          context,
-                          icon: Icons.emoji_events_rounded,
-                          color: Colors.orange,
-                          title: 'Total XP',
-                          value: '${user.totalXp} XP',
-                        ),
-                      ],
-                    ),
-                    loading: () => Column(
-                      children: [
-                        _buildSummaryRowLoading(
-                          context,
-                          icon: Icons.star_rounded,
-                          color: Colors.amber,
-                          title: 'Current Level',
-                        ),
-                        const Divider(height: 24),
-                        _buildSummaryRowLoading(
-                          context,
-                          icon: Icons.local_fire_department_rounded,
-                          color: Colors.deepOrange,
-                          title: 'Streak',
-                        ),
-                        const Divider(height: 24),
-                        _buildSummaryRowLoading(
-                          context,
-                          icon: Icons.emoji_events_rounded,
-                          color: Colors.orange,
-                          title: 'Total XP',
-                        ),
-                      ],
-                    ),
-                    error: (error, _) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.sync_problem_rounded,
-                                color: theme.colorScheme.error,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Failed to sync stats: $error',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.error,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          FilledButton.tonal(
-                            onPressed: () => ref
-                                .read(currentUserProvider.notifier)
-                                .loadUser(),
-                            child: const Text('Retry Sync'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _LearnTab extends StatelessWidget {
+  final Animation<double> pulse;
+  final Animation<double> float;
+  final Animation<double> path;
 
-  Widget _buildSummaryRow(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String value,
-  }) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(width: 16),
-        Text(
-          title,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w500,
+  const _LearnTab({
+    required this.pulse,
+    required this.float,
+    required this.path,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 1,
+          title: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: _kPrimary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Center(
+                  child: Text('🇻🇳', style: TextStyle(fontSize: 14)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Vietnamese',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              const _StatPill(
+                icon: Icons.local_fire_department_rounded,
+                iconColor: _kOrange,
+                value: '7',
+              ),
+              const SizedBox(width: 8),
+              const _StatPill(
+                icon: Icons.diamond_rounded,
+                iconColor: Color(0xFF1CB0F6),
+                value: '320',
+              ),
+              const SizedBox(width: 8),
+              const _StatPill(
+                icon: Icons.favorite_rounded,
+                iconColor: _kRed,
+                value: '5',
+              ),
+            ],
           ),
         ),
-        const Spacer(),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: _LevelProgressCard(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _AdventureMap(pulse: pulse, float: float, path: path),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: _DailyQuestsCard(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Stat pill ──────────────────────────────────────────────────────────────
+
+class _StatPill extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+
+  const _StatPill({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: iconColor, size: 20),
+        const SizedBox(width: 4),
         Text(
           value,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
       ],
     );
   }
+}
 
-  Widget _buildSummaryRowLoading(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String title,
-  }) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(width: 16),
-        Text(
-          title,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const Spacer(),
-        const SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ],
-    );
-  }
+// ── Level progress card ────────────────────────────────────────────────────
 
-  Widget _buildCoursesTab(BuildContext context) {
-    final theme = Theme.of(context);
-    final coursesAsync = ref.watch(coursesDataProvider);
+class _LevelProgressCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final courseData = ref.watch(_enrolledCourseProvider).valueOrNull;
+    final completedIds =
+        ref.watch(_completedLessonsProvider).valueOrNull ?? const {};
 
-    return coursesAsync.when(
-      data: (courses) {
-        return ListView.separated(
-          padding: const EdgeInsets.all(24.0),
-          itemCount: courses.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final course = courses[index];
-            IconData courseIcon = Icons.menu_book_rounded;
-            if (course.title.toLowerCase().contains('english')) {
-              courseIcon = Icons.language_rounded;
-            } else if (course.title.toLowerCase().contains('conversation')) {
-              courseIcon = Icons.chat_bubble_outline_rounded;
-            } else if (course.title.toLowerCase().contains('toeic')) {
-              courseIcon = Icons.assignment_rounded;
-            } else if (course.title.toLowerCase().contains('business')) {
-              courseIcon = Icons.business_center_rounded;
-            }
+    String unitLabel = 'Unit 1';
+    String unitSubtitle = 'Basics – Greetings & Numbers';
+    int completedCount = 0;
+    int totalCount = 5;
 
-            return Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                ),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                leading: CircleAvatar(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Icon(
-                    courseIcon,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                title: Text(
-                  course.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(
-                    course.description,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () {
-                  final HeartState heartState = ref.read(heartProvider);
-                  if (!heartState.canStartLesson) {
-                    showDialog<void>(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          icon: const Icon(
-                            Icons.heart_broken_rounded,
-                            color: Color(0xFFE94057),
-                            size: 36,
-                          ),
-                          title: const Text('Hết lượt tim'),
-                          content: const Text(
-                            'Hãy nạp lại tim trước khi bắt đầu bài học mới.',
-                          ),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Đóng'),
-                            ),
-                            FilledButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                                ref.read(heartProvider.notifier).refillHearts();
-                              },
-                              child: const Text('Nạp tim'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                    return;
-                  }
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (context) => CourseDetailScreen(course: course),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.sync_problem_rounded, color: theme.colorScheme.error, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'Lỗi tải khóa học: $err',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.tonal(
-                onPressed: () => ref.invalidate(coursesDataProvider),
-                child: const Text('Thử lại'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openCourse(String title) {
-    final HeartState heartState = ref.read(heartProvider);
-    if (!heartState.canStartLesson) {
-      showDialog<void>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            icon: const Icon(
-              Icons.heart_broken_rounded,
-              color: Color(0xFFE94057),
-              size: 36,
-            ),
-            title: const Text('No hearts left'),
-            content: const Text(
-              'Refill your hearts before starting another lesson.',
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Not now'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  ref.read(heartProvider.notifier).refillHearts();
-                },
-                child: const Text('Refill hearts'),
-              ),
-            ],
-          );
-        },
-      );
-      return;
+    if (courseData != null) {
+      final units = courseData['units'] as List<dynamic>?;
+      if (units != null && units.isNotEmpty) {
+        final firstUnit = units.first as Map<String, dynamic>;
+        unitSubtitle = (firstUnit['title'] ?? unitSubtitle) as String;
+        final lessons = firstUnit['lessons'] as List<dynamic>? ?? [];
+        totalCount = lessons.isEmpty ? 1 : lessons.length;
+        completedCount = lessons.where((l) {
+          final id = ((l as Map<String, dynamic>)['_id'] ?? '') as String;
+          return completedIds.contains(id);
+        }).length;
+      }
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Selected: $title')));
-  }
-
-  Widget _buildProgressTab(BuildContext context) {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Stats Overview',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.courseList),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 12),
-          Consumer(
-            builder: (context, ref, child) {
-              final userAsync = ref.watch(currentUserProvider);
-              return userAsync.when(
-                data: (user) => _buildStatsGrid(context, user),
-                loading: () => _buildStatsGridLoading(context),
-                error: (error, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.sync_problem_rounded,
-                          color: theme.colorScheme.error,
-                          size: 40,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Failed to sync statistics: $error',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.colorScheme.error),
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton.tonal(
-                          onPressed: () =>
-                              ref.read(currentUserProvider.notifier).loadUser(),
-                          child: const Text('Retry'),
-                        ),
-                      ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _kPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    unitLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsGrid(BuildContext context, AppUser user) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.4,
-      children: <Widget>[
-        _buildStatCard(
-          context,
-          icon: Icons.star_rounded,
-          color: Colors.amber,
-          label: 'Total XP',
-          value: '${user.totalXp} XP',
-        ),
-        _buildStatCard(
-          context,
-          icon: Icons.emoji_events_rounded,
-          color: Colors.orange,
-          label: 'Level',
-          value: user.currentLevel.toUpperCase(),
-        ),
-        _buildStatCard(
-          context,
-          icon: Icons.local_fire_department_rounded,
-          color: Colors.deepOrange,
-          label: 'Streak',
-          value: '${user.streakCount} Days',
-        ),
-        _buildStatCard(
-          context,
-          icon: Icons.verified_user_rounded,
-          color: Colors.blue,
-          label: 'Status',
-          value: 'Active',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsGridLoading(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.4,
-      children: <Widget>[
-        _buildStatCardLoading(
-          context,
-          icon: Icons.star_rounded,
-          color: Colors.amber,
-          label: 'Total XP',
-        ),
-        _buildStatCardLoading(
-          context,
-          icon: Icons.emoji_events_rounded,
-          color: Colors.orange,
-          label: 'Level',
-        ),
-        _buildStatCardLoading(
-          context,
-          icon: Icons.local_fire_department_rounded,
-          color: Colors.deepOrange,
-          label: 'Streak',
-        ),
-        _buildStatCardLoading(
-          context,
-          icon: Icons.verified_user_rounded,
-          color: Colors.blue,
-          label: 'Status',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCardLoading(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String label,
-  }) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Icon(icon, color: color, size: 28),
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    unitSubtitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: totalCount > 0 ? completedCount / totalCount : 0,
+                minHeight: 10,
+                backgroundColor: const Color(0xFFE5E5E5),
+                valueColor: const AlwaysStoppedAnimation<Color>(_kPrimary),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$completedCount of $totalCount lessons completed',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildProfileTab(BuildContext context) {
+// ── Adventure map ──────────────────────────────────────────────────────────
+
+enum _NodeStatus { completed, active, locked }
+
+class _NodeData {
+  final _NodeStatus status;
+  final String label;
+  final double xFraction;
+  final String? lessonId;
+
+  const _NodeData({
+    required this.status,
+    required this.label,
+    required this.xFraction,
+    this.lessonId,
+  });
+}
+
+class _AdventureMap extends ConsumerWidget {
+  final Animation<double> pulse;
+  final Animation<double> float;
+  final Animation<double> path;
+
+  const _AdventureMap({
+    required this.pulse,
+    required this.float,
+    required this.path,
+  });
+
+  static const _xFractions = [0.50, 0.72, 0.28, 0.55];
+
+  List<_NodeData> _buildNodes(
+    Map<String, dynamic>? courseData,
+    Set<String> completedIds,
+  ) {
+    if (courseData == null) {
+      return const [
+        _NodeData(
+          status: _NodeStatus.active,
+          label: 'Lesson 1',
+          xFraction: 0.50,
+        ),
+      ];
+    }
+
+    final units = courseData['units'] as List<dynamic>?;
+    if (units == null || units.isEmpty) {
+      return const [
+        _NodeData(
+          status: _NodeStatus.active,
+          label: 'Lesson 1',
+          xFraction: 0.50,
+        ),
+      ];
+    }
+
+    final firstUnit = units.first as Map<String, dynamic>;
+    final rawLessons = (firstUnit['lessons'] as List<dynamic>? ?? [])
+        .take(4)
+        .toList();
+    if (rawLessons.isEmpty) {
+      return const [
+        _NodeData(
+          status: _NodeStatus.active,
+          label: 'Lesson 1',
+          xFraction: 0.50,
+        ),
+      ];
+    }
+
+    // Find first incomplete lesson to mark as active
+    int activeIndex = rawLessons.indexWhere((l) {
+      final id = ((l as Map<String, dynamic>)['_id'] ?? '') as String;
+      return !completedIds.contains(id);
+    });
+    if (activeIndex == -1) activeIndex = 0; // all completed — keep first active
+
+    return List.generate(rawLessons.length, (i) {
+      final lesson = rawLessons[i] as Map<String, dynamic>;
+      final id = (lesson['_id'] ?? '') as String;
+      final title = (lesson['title'] ?? 'Lesson ${i + 1}') as String;
+
+      final _NodeStatus status;
+      if (completedIds.contains(id)) {
+        status = _NodeStatus.completed;
+      } else if (i == activeIndex) {
+        status = _NodeStatus.active;
+      } else {
+        status = _NodeStatus.locked;
+      }
+
+      return _NodeData(
+        status: status,
+        label: title,
+        xFraction: _xFractions[i % _xFractions.length],
+        lessonId: id.isNotEmpty ? id : null,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final courseData = ref.watch(_enrolledCourseProvider).valueOrNull;
+    final completedIds =
+        ref.watch(_completedLessonsProvider).valueOrNull ?? const {};
+    final nodes = _buildNodes(courseData, completedIds);
+
+    const mapHeight = 480.0;
+    return SizedBox(
+      height: mapHeight,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final spacing = mapHeight / (nodes.length + 1);
+          final positions = List.generate(
+            nodes.length,
+            (i) =>
+                Offset(nodes[i].xFraction * w, mapHeight - spacing * (i + 1)),
+          );
+          return Stack(
+            children: [
+              AnimatedBuilder(
+                animation: path,
+                builder: (_, __) => CustomPaint(
+                  size: Size(w, mapHeight),
+                  painter: _PathPainter(
+                    positions: positions,
+                    progress: path.value,
+                  ),
+                ),
+              ),
+              for (int i = 0; i < nodes.length; i++)
+                Positioned(
+                  left: positions[i].dx - 32,
+                  top: positions[i].dy - 32,
+                  child: _LessonNode(
+                    data: nodes[i],
+                    pulse: nodes[i].status == _NodeStatus.active ? pulse : null,
+                    float: nodes[i].status == _NodeStatus.active ? float : null,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LessonNode extends StatelessWidget {
+  final _NodeData data;
+  final Animation<double>? pulse;
+  final Animation<double>? float;
+
+  const _LessonNode({required this.data, this.pulse, this.float});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget node = _buildCircle();
+
+    if (float != null) {
+      node = AnimatedBuilder(
+        animation: float!,
+        builder: (_, child) =>
+            Transform.translate(offset: Offset(0, float!.value), child: child),
+        child: node,
+      );
+    }
+    if (pulse != null) {
+      node = AnimatedBuilder(
+        animation: pulse!,
+        builder: (_, child) =>
+            Transform.scale(scale: pulse!.value, child: child),
+        child: node,
+      );
+    }
+
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: GestureDetector(
+        onTap: () {
+          if (data.status != _NodeStatus.locked) {
+            final lessonId = data.lessonId;
+            if (lessonId != null) {
+              context.push('/lessons/$lessonId/vocabulary');
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'This lesson is locked. Complete previous lessons first!',
+                ),
+                duration: Duration(milliseconds: 1000),
+              ),
+            );
+          }
+        },
+        child: node,
+      ),
+    );
+  }
+
+  Widget _buildCircle() {
+    switch (data.status) {
+      case _NodeStatus.completed:
+        return const _CircleNode(
+          color: _kGreen,
+          borderColor: Color(0xFF006B28),
+          child: Icon(Icons.check_rounded, color: Colors.white, size: 28),
+        );
+      case _NodeStatus.active:
+        return const _CircleNode(
+          color: _kPrimary,
+          borderColor: Color(0xFF003D8F),
+          shadow: true,
+          child: Icon(Icons.star_rounded, color: Colors.white, size: 28),
+        );
+      case _NodeStatus.locked:
+        return const _CircleNode(
+          color: Color(0xFFD1D5DB),
+          borderColor: Color(0xFF9CA3AF),
+          child: Icon(Icons.lock_rounded, color: Colors.white, size: 24),
+        );
+    }
+  }
+}
+
+class _CircleNode extends StatelessWidget {
+  final Color color;
+  final Color borderColor;
+  final Widget child;
+  final bool shadow;
+
+  const _CircleNode({
+    required this.color,
+    required this.borderColor,
+    required this.child,
+    this.shadow = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: borderColor, width: 3),
+        boxShadow: shadow
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.4),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
+      ),
+      child: Center(child: child),
+    );
+  }
+}
+
+// ── Path painter ───────────────────────────────────────────────────────────
+
+class _PathPainter extends CustomPainter {
+  final List<Offset> positions;
+  final double progress;
+
+  const _PathPainter({required this.positions, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (positions.length < 2) return;
+
+    final basePaint = Paint()
+      ..color = const Color(0xFFD1D5DB)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final activePaint = Paint()
+      ..color = _kPrimary.withValues(alpha: 0.55)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < positions.length - 1; i++) {
+      final p1 = positions[i];
+      final p2 = positions[i + 1];
+      final ctrl = Offset(p1.dx, (p1.dy + p2.dy) / 2);
+      _drawDashed(canvas, p1, ctrl, p2, i == 0 ? activePaint : basePaint);
+    }
+  }
+
+  void _drawDashed(
+    Canvas canvas,
+    Offset p0,
+    Offset ctrl,
+    Offset p2,
+    Paint paint,
+  ) {
+    const dashLen = 10.0;
+    const gapLen = 6.0;
+    const steps = 60;
+
+    bool drawing = true;
+    double carry = 0;
+    Offset prev = p0;
+
+    for (int s = 1; s <= steps; s++) {
+      final t = s / steps;
+      final x =
+          math.pow(1 - t, 2) * p0.dx +
+          2 * (1 - t) * t * ctrl.dx +
+          t * t * p2.dx;
+      final y =
+          math.pow(1 - t, 2) * p0.dy +
+          2 * (1 - t) * t * ctrl.dy +
+          t * t * p2.dy;
+      final curr = Offset(x.toDouble(), y.toDouble());
+      final segLen = (curr - prev).distance;
+
+      double rem = segLen;
+      Offset from = prev;
+
+      while (rem > 0) {
+        final needed = drawing ? dashLen - carry : gapLen - carry;
+        if (rem >= needed) {
+          final frac = needed / segLen;
+          final to = Offset(
+            from.dx + (curr.dx - prev.dx) * frac,
+            from.dy + (curr.dy - prev.dy) * frac,
+          );
+          if (drawing) canvas.drawLine(from, to, paint);
+          from = to;
+          rem -= needed;
+          carry = 0;
+          drawing = !drawing;
+        } else {
+          if (drawing) canvas.drawLine(from, curr, paint);
+          carry += rem;
+          rem = 0;
+        }
+      }
+      prev = curr;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PathPainter old) =>
+      old.progress != progress || old.positions != positions;
+}
+
+// ── Daily quests card ──────────────────────────────────────────────────────
+
+class _QuestData {
+  final String label;
+  final int current;
+  final int total;
+  final Color color;
+
+  const _QuestData({
+    required this.label,
+    required this.current,
+    required this.total,
+    required this.color,
+  });
+}
+
+class _DailyQuestsCard extends StatelessWidget {
+  static const _quests = [
+    _QuestData(label: 'Earn 10 XP', current: 6, total: 10, color: _kOrange),
+    _QuestData(
+      label: 'Complete 1 lesson',
+      current: 0,
+      total: 1,
+      color: _kPrimary,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_rounded, color: _kOrange, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Daily Quests',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const Spacer(),
+              Text(
+                'Resets in 5h',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          for (int i = 0; i < _quests.length; i++) ...[
+            _QuestRow(quest: _quests[i]),
+            if (i < _quests.length - 1) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _QuestRow extends StatelessWidget {
+  final _QuestData quest;
+
+  const _QuestRow({required this.quest});
+
+  @override
+  Widget build(BuildContext context) {
+    final done = quest.current >= quest.total;
+    return Row(
+      children: [
+        Icon(
+          done
+              ? Icons.check_circle_rounded
+              : Icons.radio_button_unchecked_rounded,
+          color: done ? _kGreen : Colors.grey.shade400,
+          size: 22,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                quest.label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: quest.current / quest.total,
+                  minHeight: 6,
+                  backgroundColor: const Color(0xFFE5E5E5),
+                  valueColor: AlwaysStoppedAnimation<Color>(quest.color),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '${quest.current}/${quest.total}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Profile tab ────────────────────────────────────────────────────────────
+
+class _ProfileTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final clerkUser = ClerkAuth.of(context).user;
-    final String fullName =
-        (clerkUser?.name != null && clerkUser!.name.isNotEmpty)
-        ? clerkUser.name
+    final name = (clerkUser?.name.isNotEmpty == true)
+        ? clerkUser!.name
         : 'PRM Student';
-    final String email = clerkUser?.email ?? '';
-    final String? avatarUrl = clerkUser?.imageUrl;
+    final email = clerkUser?.email ?? '';
+    final avatarUrl = clerkUser?.imageUrl;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.fromLTRB(16, 60, 16, 24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Card(
-            elevation: 0,
-            color: theme.colorScheme.primaryContainer,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: <Widget>[
-                  // Avatar
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: theme.colorScheme.primary,
-                    backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                        ? NetworkImage(avatarUrl)
-                        : null,
-                    child: avatarUrl == null || avatarUrl.isEmpty
-                        ? Text(
-                            (fullName.isNotEmpty ? fullName : email)
-                                .substring(0, 1)
-                                .toUpperCase(),
-                            style: theme.textTheme.headlineLarge?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  // Full Name
-                  Text(
-                    fullName,
-                    style: theme.textTheme.titleLarge?.copyWith(
+          CircleAvatar(
+            radius: 48,
+            backgroundColor: _kPrimary,
+            backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                ? NetworkImage(avatarUrl)
+                : null,
+            child: (avatarUrl == null || avatarUrl.isEmpty)
+                ? Text(
+                    (name.isNotEmpty ? name : email)[0].toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 36,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onPrimaryContainer,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  // Email
-                  Text(
-                    email,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withValues(
-                        alpha: 0.8,
-                      ),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            name,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 24),
-          Consumer(
-            builder: (context, ref, child) {
-              final userAsync = ref.watch(currentUserProvider);
-              return userAsync.when(
-                data: (_) => const SizedBox.shrink(),
-                loading: () => const Padding(
-                  padding: EdgeInsets.only(bottom: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Syncing stats with backend...',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                error: (error, _) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.orange,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Sync failed: $error',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          // Action Buttons
-          FilledButton.icon(
-            onPressed: () {
-              ref.read(currentUserProvider.notifier).loadUser();
-            },
-            icon: const Icon(Icons.sync_rounded),
-            label: const Text('Sync with Backend'),
-          ),
-          const SizedBox(height: 12),
+          if (email.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              email,
+              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+          ],
+          const SizedBox(height: 32),
           OutlinedButton.icon(
             onPressed: () async {
               try {
                 await ClerkAuth.of(context).signOut();
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to sign out: $e')),
-                  );
-                }
-              }
+              } catch (_) {}
             },
             icon: const Icon(Icons.logout_rounded),
             label: const Text('Sign Out'),
@@ -817,49 +918,34 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
   }
+}
 
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String label,
-    required String value,
-  }) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Icon(icon, color: color, size: 28),
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+// ── Placeholder tabs ───────────────────────────────────────────────────────
+
+class _PlaceholderTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _PlaceholderTab({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 64, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: TextStyle(fontSize: 18, color: Colors.grey.shade400),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Coming soon',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          ),
+        ],
       ),
     );
   }
