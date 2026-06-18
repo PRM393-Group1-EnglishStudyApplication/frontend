@@ -8,8 +8,9 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
   LeaderboardRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<List<LeaderboardEntry>> getCurrentLeaderboard() {
-    return _remoteDataSource.getCurrentLeaderboard();
+  Future<List<LeaderboardEntry>> getCurrentLeaderboard() async {
+    final models = await _remoteDataSource.getCurrentLeaderboard();
+    return List<LeaderboardEntry>.from(models);
   }
 
   @override

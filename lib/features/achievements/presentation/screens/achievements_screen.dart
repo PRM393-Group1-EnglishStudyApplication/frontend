@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/achievement.dart';
 import '../providers/achievements_providers.dart';
 import '../widgets/badge_detail_sheet.dart';
 

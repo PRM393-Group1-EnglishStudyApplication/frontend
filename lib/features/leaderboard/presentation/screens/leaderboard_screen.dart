@@ -1,4 +1,3 @@
-import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -147,8 +146,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
   }
 
   Widget _buildPodium(BuildContext context, List<LeaderboardEntry> top3, String? currentUserId) {
-    final theme = Theme.of(context);
-    
     // Sort so 2nd is left, 1st is center, 3rd is right
     LeaderboardEntry? first = top3.isNotEmpty ? top3[0] : null;
     LeaderboardEntry? second = top3.length > 1 ? top3[1] : null;

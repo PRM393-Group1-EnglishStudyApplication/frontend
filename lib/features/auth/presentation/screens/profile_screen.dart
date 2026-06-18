@@ -54,7 +54,6 @@ class ProfileScreen extends ConsumerWidget {
       body: userAsync.when(
         data: (user) {
           final String fullName = user.fullName ?? 'Học viên';
-          final String email = user.email;
           final String? avatarUrl = user.avatarUrl;
 
           return SingleChildScrollView(

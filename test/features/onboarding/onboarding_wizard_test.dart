@@ -58,11 +58,11 @@ void main() {
 
     // Verify Quiz Question 1
     expect(find.text('Question 1 of 3'), findsOneWidget);
-    expect(find.text("Choose the correct translation for 'Hello':"), findsOneWidget);
-    expect(find.text('Bonjour'), findsOneWidget);
+    expect(find.text("Chọn từ tiếng Anh có nghĩa là 'Xin chào':"), findsOneWidget);
+    expect(find.text('Hello'), findsOneWidget);
 
     // 3. Answer Q1 correctly
-    await tester.tap(find.text('Bonjour'));
+    await tester.tap(find.text('Hello'));
     await tester.pump();
     // Advance transition timer (1 second)
     await tester.pump(const Duration(seconds: 1));
@@ -70,22 +70,22 @@ void main() {
 
     // Verify Quiz Question 2
     expect(find.text('Question 2 of 3'), findsOneWidget);
-    expect(find.text("Which of these means 'Thank you'?"), findsOneWidget);
-    expect(find.text('Merci'), findsOneWidget);
+    expect(find.text("Từ nào dưới đây có nghĩa là 'Cảm ơn'?"), findsOneWidget);
+    expect(find.text('Thank you'), findsOneWidget);
 
     // 4. Answer Q2 correctly
-    await tester.tap(find.text('Merci'));
+    await tester.tap(find.text('Thank you'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
     // Verify Quiz Question 3
     expect(find.text('Question 3 of 3'), findsOneWidget);
-    expect(find.text("Complete the phrase: '___ va?' (How's it going?)"), findsOneWidget);
-    expect(find.text('Ça'), findsOneWidget);
+    expect(find.text("Hoàn thành câu sau: 'How ___ you?' (Bạn khỏe không?)"), findsOneWidget);
+    expect(find.text('are'), findsOneWidget);
 
     // 5. Answer Q3 correctly
-    await tester.tap(find.text('Ça'));
+    await tester.tap(find.text('are'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
