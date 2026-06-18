@@ -7,6 +7,7 @@ import '../../data/models/exercise_model.dart';
 import '../../data/models/lesson_model.dart';
 import '../providers/lessons_providers.dart';
 import '../providers/course_providers.dart';
+import '../providers/favorites_provider.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
   final LessonModel lesson;
@@ -129,54 +130,86 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 borderRadius: BorderRadius.circular(24),
                 side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.1)),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      vocab.word,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          vocab.word,
+                          style: theme.textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        Text(
+                          vocab.pronunciation,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const Divider(height: 40),
+                        Text(
+                          'Ý nghĩa',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          vocab.meaning,
+                          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Ví dụ',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          vocab.exampleSentence,
+                          style: theme.textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                    Text(
-                      vocab.pronunciation,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                      ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        final favsAsync = ref.watch(favoritesProvider);
+                        final isFav = favsAsync.value?.contains(vocab.id) ?? false;
+                        return IconButton(
+                          icon: Icon(
+                            isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                            color: isFav ? Colors.amber : Colors.grey,
+                            size: 32,
+                          ),
+                          onPressed: () async {
+                            try {
+                              await ref.read(favoritesProvider.notifier).toggleFavorite(vocab);
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Lỗi: $e')),
+                                );
+                              }
+                            }
+                          },
+                        );
+                      },
                     ),
-                    const Divider(height: 40),
-                    Text(
-                      'Ý nghĩa',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vocab.meaning,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Ví dụ',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vocab.exampleSentence,
-                      style: theme.textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

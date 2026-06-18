@@ -9,4 +9,7 @@ abstract class LessonsRepository {
   Future<List<LessonModel>> getLessons(String unitId);
   Future<LessonDetailModel> getLessonDetail(String lessonId);
   Future<LessonSubmissionResult> submitLesson(String lessonId, List<Map<String, dynamic>> answers);
+  Future<List<VocabularyModel>> getFavoriteVocabularies();
+  Future<void> addFavoriteVocabulary(String vocabId);
+  Future<void> removeFavoriteVocabulary(String vocabId);
 }

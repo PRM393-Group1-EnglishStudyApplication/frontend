@@ -11,6 +11,9 @@ abstract class LessonsRemoteDataSource {
   Future<List<LessonModel>> getLessons(String unitId);
   Future<LessonDetailModel> getLessonDetail(String lessonId);
   Future<LessonSubmissionResult> submitLesson(String lessonId, List<Map<String, dynamic>> answers);
+  Future<List<VocabularyModel>> getFavoriteVocabularies();
+  Future<void> addFavoriteVocabulary(String vocabId);
+  Future<void> removeFavoriteVocabulary(String vocabId);
 }
 
 class LessonsRemoteDataSourceImpl implements LessonsRemoteDataSource {
@@ -64,9 +67,7 @@ class LessonsRemoteDataSourceImpl implements LessonsRemoteDataSource {
     );
     if (!apiResponse.success || apiResponse.data == null) throw Exception(apiResponse.message);
     return apiResponse.data!;
-  }
-
-  @override
+  }  @override
   Future<LessonSubmissionResult> submitLesson(String lessonId, List<Map<String, dynamic>> answers) async {
     final Response<dynamic> response = await _dio.post<dynamic>(
       '/api/lessons/$lessonId/submit',
@@ -79,5 +80,43 @@ class LessonsRemoteDataSourceImpl implements LessonsRemoteDataSource {
     );
     if (!apiResponse.success || apiResponse.data == null) throw Exception(apiResponse.message);
     return apiResponse.data!;
+  }
+
+  @override
+  Future<List<VocabularyModel>> getFavoriteVocabularies() async {
+    final Response<dynamic> response = await _dio.get<dynamic>('/api/favorites/me');
+    if (response.data == null) throw Exception('Null response body');
+    final apiResponse = ApiResponse<List<dynamic>>.fromJson(
+      response.data as Map<String, dynamic>,
+      (json) => json as List<dynamic>,
+    );
+    if (!apiResponse.success || apiResponse.data == null) throw Exception(apiResponse.message);
+    return apiResponse.data!.map((item) {
+      final map = item as Map<String, dynamic>;
+      final vocabJson = map['vocabulary'] as Map<String, dynamic>?;
+      return vocabJson != null ? VocabularyModel.fromJson(vocabJson) : null;
+    }).whereType<VocabularyModel>().toList();
+  }
+
+  @override
+  Future<void> addFavoriteVocabulary(String vocabId) async {
+    final Response<dynamic> response = await _dio.post<dynamic>('/api/favorites/$vocabId');
+    if (response.data == null) throw Exception('Null response body');
+    final apiResponse = ApiResponse<dynamic>.fromJson(
+      response.data as Map<String, dynamic>,
+      (json) => json,
+    );
+    if (!apiResponse.success) throw Exception(apiResponse.message);
+  }
+
+  @override
+  Future<void> removeFavoriteVocabulary(String vocabId) async {
+    final Response<dynamic> response = await _dio.delete<dynamic>('/api/favorites/$vocabId');
+    if (response.data == null) throw Exception('Null response body');
+    final apiResponse = ApiResponse<dynamic>.fromJson(
+      response.data as Map<String, dynamic>,
+      (json) => json,
+    );
+    if (!apiResponse.success) throw Exception(apiResponse.message);
   }
 }

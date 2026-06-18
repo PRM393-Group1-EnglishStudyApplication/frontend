@@ -25,4 +25,13 @@ class LessonsRepositoryImpl implements LessonsRepository {
   @override
   Future<LessonSubmissionResult> submitLesson(String lessonId, List<Map<String, dynamic>> answers) =>
       _remoteDataSource.submitLesson(lessonId, answers);
+
+  @override
+  Future<List<VocabularyModel>> getFavoriteVocabularies() => _remoteDataSource.getFavoriteVocabularies();
+
+  @override
+  Future<void> addFavoriteVocabulary(String vocabId) => _remoteDataSource.addFavoriteVocabulary(vocabId);
+
+  @override
+  Future<void> removeFavoriteVocabulary(String vocabId) => _remoteDataSource.removeFavoriteVocabulary(vocabId);
 }
