@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../progress/presentation/providers/progress_providers.dart';
 import '../../data/models/course_model.dart';
 import '../../data/models/unit_model.dart';
 import '../../data/models/lesson_model.dart';
@@ -58,40 +59,33 @@ final activeCourseProvider = StateNotifierProvider<ActiveCourseNotifier, CourseM
 final activeUnitProvider = StateProvider<String?>((ref) => null);
 
 class CompletedLessonsNotifier extends StateNotifier<Set<String>> {
-  CompletedLessonsNotifier() : super(<String>{}) {
-    _load();
+  final Ref _ref;
+
+  CompletedLessonsNotifier(this._ref) : super(<String>{}) {
+    reloadFromApi();
   }
 
-  Future<void> _load() async {
+  Future<void> reloadFromApi() async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final Set<String> keys = prefs.getKeys();
-      final Set<String> completed = <String>{};
-      for (final String key in keys) {
-        if (key.startsWith('completed_lesson_') && prefs.getBool(key) == true) {
-          completed.add(key.substring('completed_lesson_'.length));
-        }
-      }
-      state = completed;
+      final progress = await _ref.read(progressEntriesProvider.future);
+      state = progress
+          .where((entry) => entry.isCompleted)
+          .map((entry) => entry.lessonId)
+          .where((lessonId) => lessonId.isNotEmpty)
+          .toSet();
     } catch (e) {
-      print('Error loading completed lessons: $e');
+      print('Error loading completed lessons from API: $e');
     }
   }
 
-  Future<void> markAsCompleted(String lessonId) async {
+  void markAsCompleted(String lessonId) {
     state = <String>{...state, lessonId};
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('completed_lesson_$lessonId', true);
-    } catch (e) {
-      print('Error saving completed lesson: $e');
-    }
   }
 }
 
 final StateNotifierProvider<CompletedLessonsNotifier, Set<String>> completedLessonsProvider =
     StateNotifierProvider<CompletedLessonsNotifier, Set<String>>((Ref ref) {
-  return CompletedLessonsNotifier();
+  return CompletedLessonsNotifier(ref);
 });
 
 final isUnitUnlockedProvider = Provider.family<bool, UnitModel>((ref, unit) {

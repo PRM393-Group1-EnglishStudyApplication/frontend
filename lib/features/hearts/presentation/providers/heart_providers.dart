@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/heart_remote_data_source.dart';
@@ -9,7 +8,7 @@ import '../../data/repositories/heart_repository_impl.dart';
 import '../../domain/entities/heart_status.dart';
 import '../../domain/repositories/heart_repository.dart';
 
-const Duration heartRefillDuration = Duration(hours: 5);
+const Duration heartRefillDuration = Duration(minutes: 10);
 
 final Provider<HeartRemoteDataSource> heartRemoteDataSourceProvider =
     Provider<HeartRemoteDataSource>((Ref ref) {
@@ -63,18 +62,14 @@ class HeartState {
 class HeartNotifier extends StateNotifier<HeartState> {
   final HeartRepository _repository;
   final String? _token;
-  final Future<SharedPreferences> Function() _preferencesFactory;
   final DateTime Function() _now;
   Timer? _timer;
 
   HeartNotifier(
     this._repository,
     this._token, {
-    Future<SharedPreferences> Function()? preferencesFactory,
     DateTime Function()? now,
-  }) : _preferencesFactory =
-           preferencesFactory ?? SharedPreferences.getInstance,
-       _now = now ?? DateTime.now,
+  }) : _now = now ?? DateTime.now,
        super(HeartState(isLoading: _token != null)) {
     if (_token != null) {
       loadHearts();
@@ -85,8 +80,11 @@ class HeartNotifier extends StateNotifier<HeartState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final HeartStatus hearts = await _repository.getMyHearts();
+      final Duration? refillRemaining = _remainingFromServer(hearts);
       state = state.copyWith(
         hearts: hearts,
+        refillRemaining: refillRemaining,
+        clearRefillRemaining: refillRemaining == null,
         isLoading: false,
         clearError: true,
       );
@@ -102,9 +100,12 @@ class HeartNotifier extends StateNotifier<HeartState> {
       return false;
     }
 
-    final HeartStatus updated = hearts.copyWith(
-      currentHearts: (hearts.currentHearts - 1).clamp(0, hearts.maxHearts),
-    );
+      final HeartStatus updated = hearts.copyWith(
+        currentHearts: (hearts.currentHearts - 1).clamp(0, hearts.maxHearts),
+        nextRefillAt: hearts.nextRefillAt ?? _now().add(heartRefillDuration),
+        secondsUntilNextRefill:
+            hearts.secondsUntilNextRefill ?? heartRefillDuration.inSeconds,
+      );
     state = state.copyWith(hearts: updated, clearError: true);
     await _configureRefillTimer(updated);
     return !updated.isEmpty;
@@ -117,9 +118,9 @@ class HeartNotifier extends StateNotifier<HeartState> {
       return;
     }
 
-    final HeartStatus updated = hearts.copyWith(
-      currentHearts: currentHearts.clamp(0, hearts.maxHearts),
-    );
+      final HeartStatus updated = hearts.copyWith(
+        currentHearts: currentHearts.clamp(0, hearts.maxHearts),
+      );
     state = state.copyWith(hearts: updated, clearError: true);
     await _configureRefillTimer(updated);
   }
@@ -138,7 +139,6 @@ class HeartNotifier extends StateNotifier<HeartState> {
         clearRefillRemaining: true,
         clearError: true,
       );
-      await _clearRefillDeadline(hearts.userId);
       _timer?.cancel();
     } catch (error) {
       state = state.copyWith(
@@ -152,24 +152,20 @@ class HeartNotifier extends StateNotifier<HeartState> {
     _timer?.cancel();
 
     if (hearts.isFull) {
-      await _clearRefillDeadline(hearts.userId);
       state = state.copyWith(clearRefillRemaining: true);
       return;
     }
 
-    final SharedPreferences preferences = await _preferencesFactory();
-    final String key = _deadlineKey(hearts.userId);
-    final String? storedDeadline = preferences.getString(key);
-    DateTime? deadline = DateTime.tryParse(storedDeadline ?? '');
-
-    if (deadline == null) {
-      deadline = _now().add(heartRefillDuration);
-      await preferences.setString(key, deadline.toIso8601String());
-    }
+    final DateTime deadline = hearts.nextRefillAt ??
+        _now().add(
+          Duration(
+            seconds: hearts.secondsUntilNextRefill ?? heartRefillDuration.inSeconds,
+          ),
+        );
 
     await _updateCountdown(deadline);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateCountdown(deadline!);
+      _updateCountdown(deadline);
     });
   }
 
@@ -178,21 +174,25 @@ class HeartNotifier extends StateNotifier<HeartState> {
     if (remaining <= Duration.zero) {
       _timer?.cancel();
       state = state.copyWith(refillRemaining: Duration.zero);
-      await refillHearts();
+      await loadHearts();
       return;
     }
     state = state.copyWith(refillRemaining: remaining);
   }
 
-  Future<void> _clearRefillDeadline(String userId) async {
-    if (userId.isEmpty) {
-      return;
+  Duration? _remainingFromServer(HeartStatus hearts) {
+    if (hearts.isFull) {
+      return null;
     }
-    final SharedPreferences preferences = await _preferencesFactory();
-    await preferences.remove(_deadlineKey(userId));
+    if (hearts.secondsUntilNextRefill != null) {
+      return Duration(seconds: hearts.secondsUntilNextRefill!.clamp(0, 1 << 31));
+    }
+    if (hearts.nextRefillAt != null) {
+      final remaining = hearts.nextRefillAt!.difference(_now());
+      return remaining.isNegative ? Duration.zero : remaining;
+    }
+    return heartRefillDuration;
   }
-
-  String _deadlineKey(String userId) => 'heart_refill_deadline_$userId';
 
   @override
   void dispose() {

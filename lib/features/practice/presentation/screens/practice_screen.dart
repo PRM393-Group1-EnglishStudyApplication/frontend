@@ -11,39 +11,42 @@ class PracticeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final userAsync = ref.watch(currentUserProvider);
-    
     final streakAsync = ref.watch(practiceStreakProvider);
-    final vocabAsync = ref.watch(vocabularyCountProvider);
+    final completedAsync = ref.watch(completedLessonCountProvider);
+    final earnedXpAsync = ref.watch(earnedXpProvider);
     final accuracyAsync = ref.watch(accuracyPercentageProvider);
-    final wrongWordsAsync = ref.watch(wrongWordsDataProvider);
 
     final String fullName = userAsync.maybeWhen(
-      data: (user) => user.fullName ?? 'Học viên',
+      data: (user) => user.fullName ?? 'Hoc vien',
       orElse: () => 'PRM Student',
     );
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Greeting & Header
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(completedLessonCountProvider);
+          ref.invalidate(earnedXpProvider);
+          ref.invalidate(accuracyPercentageProvider);
+          await ref.read(currentUserProvider.notifier).loadUser();
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: <Widget>[
             Row(
-              children: [
+              children: <Widget>[
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    children: <Widget>[
                       Text(
-                        'Chào, $fullName!',
+                        'Chao, $fullName!',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Bạn đang làm rất tốt hôm nay.',
+                        'Thong tin luyen tap duoc dong bo tu backend.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -51,370 +54,207 @@ class PracticeScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.verified_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
+                Icon(
+                  Icons.auto_stories_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 36,
                 ),
               ],
             ),
             const SizedBox(height: 24),
-
-            // Personal Insights Header
             Text(
-              'Luyện tập (Personal Insights)',
+              'Practice insights',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-
-            // Metrics Grid/Row
             Row(
-              children: [
-                // Streak Card
+              children: <Widget>[
                 Expanded(
-                  child: _buildMetricCard(
-                    context,
+                  child: _MetricCard(
                     icon: Icons.local_fire_department_rounded,
                     color: Colors.deepOrange,
-                    label: 'Practice Streak',
-                    value: streakAsync.maybeWhen(
-                      data: (streak) => '$streak Ngày',
-                      orElse: () => '-- Ngày',
+                    label: 'Streak',
+                    value: streakAsync.when(
+                      data: (value) => '$value ngay',
+                      loading: () => '--',
+                      error: (_, __) => '--',
                     ),
-                    extra: '+3 hôm nay',
+                    helper: 'Tu ho so backend',
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Vocab Card
                 Expanded(
-                  child: _buildMetricCard(
-                    context,
-                    icon: Icons.menu_book_rounded,
-                    color: Colors.blue,
-                    label: 'Từ vựng',
-                    value: vocabAsync.maybeWhen(
-                      data: (count) => '$count',
-                      orElse: () => '--',
+                  child: _MetricCard(
+                    icon: Icons.check_circle_rounded,
+                    color: Colors.green,
+                    label: 'Bai hoan thanh',
+                    value: completedAsync.when(
+                      data: (value) => '$value',
+                      loading: () => '--',
+                      error: (_, __) => '--',
                     ),
-                    extra: 'Tổng số từ',
+                    helper: 'Tu /api/progress/me',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-
-            // Accuracy Card
-            _buildAccuracyCard(
-              context,
-              accuracyAsync.maybeWhen(
-                data: (pct) => '$pct%',
-                orElse: () => '--%',
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // Wrong answers review section
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Cần xem lại',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+              children: <Widget>[
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.diamond_rounded,
+                    color: Colors.blue,
+                    label: 'XP bai hoc',
+                    value: earnedXpAsync.when(
+                      data: (value) => '$value',
+                      loading: () => '--',
+                      error: (_, __) => '--',
+                    ),
+                    helper: 'Tong XP progress',
                   ),
                 ),
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Hiển thị tất cả từ nhầm lẫn')),
-                    );
-                  },
-                  child: const Row(
-                    children: [
-                      Text('Tất cả'),
-                      Icon(Icons.chevron_right_rounded, size: 16),
-                    ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetricCard(
+                    icon: Icons.gps_fixed_rounded,
+                    color: Colors.teal,
+                    label: 'Do chinh xac',
+                    value: accuracyAsync.when(
+                      data: (value) => value == 0 ? '--' : '$value%',
+                      loading: () => '--',
+                      error: (_, __) => '--',
+                    ),
+                    helper: 'Diem trung binh',
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 28),
             Text(
-              'Những từ bạn thường hay nhầm lẫn',
+              'Can xem lai',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _UnavailableWrongAnswersCard(
+              onRefresh: () => ref.invalidate(completedLessonCountProvider),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+  final String helper;
+
+  const _MetricCard({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+    required this.helper,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(icon, color: color),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              helper,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
-
-            // List of Wrong Words
-            wrongWordsAsync.when(
-              data: (words) => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: words.length,
-                itemBuilder: (context, index) {
-                  final word = words[index];
-                  return _buildWrongWordRow(context, word, index);
-                },
-              ),
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-              error: (err, _) => Center(
-                child: Text('Lỗi: $err'),
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // Call to Action: Start Practice Card
-            Card(
-              elevation: 0,
-              color: theme.colorScheme.primaryContainer,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Bắt đầu ôn tập ngay?',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Hoàn thành 5 phút ôn lại các lỗi sai để nhận nhân đôi kinh nghiệm (XP).',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.9),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Bắt đầu buổi ôn tập lỗi sai...')),
-                        );
-                      },
-                      child: const Text('Luyện tập ngay'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildMetricCard(
-    BuildContext context, {
-    required IconData icon,
-    required Color color,
-    required String label,
-    required String value,
-    required String extra,
-  }) {
+class _UnavailableWrongAnswersCard extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _UnavailableWrongAnswersCard({required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
+      color: theme.colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 24),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
+          children: <Widget>[
+            Icon(
+              Icons.info_outline_rounded,
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 12),
             Text(
-              value,
+              'Chua co du lieu cau sai',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
-              extra,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+              'Khi ban hoan thanh them bai hoc, nhung cau can on lai se duoc hien thi tai day.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Tai lai'),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAccuracyCard(BuildContext context, String value) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.gps_fixed_rounded, color: Colors.green, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Độ chính xác',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              '▲ 2% tuần này',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWrongWordRow(BuildContext context, dynamic word, int index) {
-    final theme = Theme.of(context);
-    final isPronunciation = index == 0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Left Icon based on mistake type
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: (isPronunciation ? Colors.purple : Colors.orange).withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isPronunciation ? Icons.volume_up_rounded : Icons.edit_rounded,
-              color: isPronunciation ? Colors.purple : Colors.orange,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Middle Word & Description
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      word.word as String,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        word.level as String,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                          color: theme.colorScheme.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '"${word.definition}" - ${word.mistakeExplanation}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -6,6 +6,8 @@ class HeartModel extends HeartStatus {
     required super.currentHearts,
     required super.maxHearts,
     super.lastRefillAt,
+    super.nextRefillAt,
+    super.secondsUntilNextRefill,
   });
 
   factory HeartModel.fromJson(Map<String, dynamic> json) {
@@ -19,6 +21,9 @@ class HeartModel extends HeartStatus {
       currentHearts: (json['current_hearts'] as num?)?.toInt() ?? 0,
       maxHearts: (json['max_hearts'] as num?)?.toInt() ?? 5,
       lastRefillAt: DateTime.tryParse(json['last_refill_at']?.toString() ?? ''),
+      nextRefillAt: DateTime.tryParse(json['next_refill_at']?.toString() ?? ''),
+      secondsUntilNextRefill:
+          (json['seconds_until_next_refill'] as num?)?.toInt(),
     );
   }
 }

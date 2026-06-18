@@ -65,6 +65,7 @@ class HeartDetailsSheet extends ConsumerWidget {
     final HeartState state = ref.watch(heartProvider);
     final int current = state.hearts?.currentHearts ?? 0;
     final int maximum = state.hearts?.maxHearts ?? 5;
+    final int visibleHeartIcons = maximum.clamp(0, 20);
 
     return SafeArea(
       child: Padding(
@@ -96,8 +97,8 @@ class HeartDetailsSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               state.isOutOfHearts
-                  ? 'Lessons are paused until your hearts are refilled.'
-                  : 'A wrong answer costs one heart. Keep learning carefully!',
+                  ? 'Lessons are paused until your hearts are refilled by the server.'
+                  : 'A wrong answer costs one heart. Refill timing is synced from backend.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -107,7 +108,7 @@ class HeartDetailsSheet extends ConsumerWidget {
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,
-              children: List<Widget>.generate(maximum, (int index) {
+              children: List<Widget>.generate(visibleHeartIcons, (int index) {
                 final bool filled = index < current;
                 return Icon(
                   filled
@@ -119,6 +120,13 @@ class HeartDetailsSheet extends ConsumerWidget {
                   size: 34,
                 );
               }),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$current / $maximum hearts',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 18),
             if (state.refillRemaining != null)
@@ -141,7 +149,7 @@ class HeartDetailsSheet extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            'Full refill in',
+                            'Next refill sync in',
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),

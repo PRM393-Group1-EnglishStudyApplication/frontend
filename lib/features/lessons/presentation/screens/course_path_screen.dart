@@ -21,6 +21,7 @@ class CoursePathScreen extends ConsumerStatefulWidget {
 class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
+  bool _isDailyRewardClaimed = false;
 
   @override
   void initState() {
@@ -719,6 +720,12 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
 
   Widget _buildDailyQuestsCard(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    const int questTarget = 10;
+    const int questCompleted = 7;
+    final double progressValue = (questCompleted / questTarget).clamp(0.0, 1.0);
+    final int progressPercent = (progressValue * 100).round();
+    final bool isQuestCompleted = questCompleted >= questTarget;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
       padding: const EdgeInsets.all(16.0),
@@ -772,7 +779,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Đã hoàn thành 7/10',
+                    'Đã hoàn thành $questCompleted/$questTarget',
                     style: TextStyle(
                       fontSize: 12,
                       color: colors.onSurfaceVariant,
@@ -788,7 +795,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
                   fit: StackFit.expand,
                   children: [
                     CircularProgressIndicator(
-                      value: 0.7,
+                      value: progressValue,
                       backgroundColor: colors.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         colors.secondary,
@@ -797,7 +804,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
                     ),
                     Center(
                       child: Text(
-                        '70%',
+                        '$progressPercent%',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -815,6 +822,28 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
             width: double.infinity,
             child: FilledButton(
               onPressed: () {
+                if (!isQuestCompleted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Bạn cần hoàn thành đủ $questTarget/$questTarget để nhận thưởng.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                if (_isDailyRewardClaimed) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Bạn đã nhận thưởng nhiệm vụ hôm nay rồi.'),
+                    ),
+                  );
+                  return;
+                }
+
+                setState(() {
+                  _isDailyRewardClaimed = true;
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đã nhận 150 XP Nhiệm vụ hàng ngày!'),
@@ -828,8 +857,8 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: const Text(
-                'NHẬN THƯỞNG',
+              child: Text(
+                _isDailyRewardClaimed ? 'ĐÃ NHẬN THƯỞNG' : 'NHẬN THƯỞNG',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),

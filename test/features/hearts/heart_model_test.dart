@@ -8,11 +8,15 @@ void main() {
       'current_hearts': 3,
       'max_hearts': 5,
       'last_refill_at': '2026-06-15T10:00:00.000Z',
+      'next_refill_at': '2026-06-15T10:10:00.000Z',
+      'seconds_until_next_refill': 600,
     });
 
     expect(model.userId, 'user_123');
     expect(model.currentHearts, 3);
     expect(model.maxHearts, 5);
     expect(model.lastRefillAt, DateTime.parse('2026-06-15T10:00:00.000Z'));
+    expect(model.nextRefillAt, DateTime.parse('2026-06-15T10:10:00.000Z'));
+    expect(model.secondsUntilNextRefill, 600);
   });
 }

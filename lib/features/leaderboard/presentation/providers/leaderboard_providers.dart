@@ -28,3 +28,20 @@ final FutureProvider<LeaderboardEntry> myLeaderboardProvider =
   final repository = ref.watch(leaderboardRepositoryProvider);
   return repository.getMyLeaderboard();
 });
+
+class LeaderboardViewData {
+  final List<LeaderboardEntry> entries;
+  final LeaderboardEntry myEntry;
+
+  const LeaderboardViewData({
+    required this.entries,
+    required this.myEntry,
+  });
+}
+
+final FutureProvider<LeaderboardViewData> leaderboardViewProvider =
+    FutureProvider<LeaderboardViewData>((Ref ref) async {
+  final entries = await ref.watch(leaderboardDataProvider.future);
+  final myEntry = await ref.watch(myLeaderboardProvider.future);
+  return LeaderboardViewData(entries: entries, myEntry: myEntry);
+});
