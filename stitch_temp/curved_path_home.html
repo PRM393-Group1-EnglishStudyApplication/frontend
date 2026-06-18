@@ -1,0 +1,387 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LinguoPlay - Start Your Adventure</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,200&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#ffb868",
+                        "primary-fixed": "#d9e2ff",
+                        "on-primary-fixed": "#001945",
+                        "on-primary-container": "#fefcff",
+                        "surface-variant": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#673d00",
+                        "primary-fixed-dim": "#b0c6ff",
+                        "on-primary-fixed-variant": "#00429c",
+                        "surface-dim": "#d8dadc",
+                        "surface-container": "#eceef0",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#002107",
+                        "tertiary-container": "#008733",
+                        "tertiary-fixed": "#72fe88",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#53e16f",
+                        "primary": "#0055c6",
+                        "on-tertiary-container": "#f7fff2",
+                        "on-tertiary-fixed-variant": "#00531c",
+                        "secondary-fixed": "#ffddbb",
+                        "primary-container": "#176df2",
+                        "background": "#f7f9fb",
+                        "secondary": "#885200",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "outline": "#727786",
+                        "outline-variant": "#c2c6d7",
+                        "on-surface": "#191c1e",
+                        "surface-container-high": "#e6e8ea",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#2b1700",
+                        "inverse-primary": "#b0c6ff",
+                        "surface-tint": "#0058cb",
+                        "on-secondary-container": "#653c00",
+                        "surface": "#f7f9fb",
+                        "secondary-container": "#fd9d06",
+                        "on-surface-variant": "#424654",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary": "#006b27"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "stack-sm": "12px",
+                        "container-margin": "20px",
+                        "stack-md": "24px",
+                        "stack-lg": "40px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Nunito Sans"],
+                        "headline-lg": ["Nunito Sans"],
+                        "headline-lg-mobile": ["Nunito Sans"],
+                        "display": ["Nunito Sans"],
+                        "body-lg": ["Nunito Sans"],
+                        "body-md": ["Nunito Sans"],
+                        "headline-md": ["Nunito Sans"],
+                        "label-lg": ["Nunito Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+        }
+        .adventure-map-bg {
+            background-image: linear-gradient(rgba(247, 249, 251, 0.9), rgba(247, 249, 251, 0.9)), url(https://lh3.googleusercontent.com/aida-public/AB6AXuBDyAxBdAxt-e8szBmG_M6ngn3eDWcqQzI-39hr7hecYnhz0fnFsm3sCC-P41BQQzaQfbZ8hV2rSUT0YAKohpEJiApREbbdjSvSewgwDJ1WupFeWyThYXWMwUwZAiDfQOgMftSXEhuzO3NF3dsvi7BfwrGQjGERPr4X_kVO2LQxuzXqJC8oYhK51JwM4ftYYbI0eg-ZMEUc2JGoWP6Dv7hcRx1EccXokkEuX-n8RlBejeFWRko90vuBXM9nPt5nbdZn5I1nl3VZrA);
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center
+        }
+        .elastic-button {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 0 0 rgba(0, 85, 198, 0.2), 0 15px 25px -5px rgba(0, 85, 198, 0.1)
+        }
+        .elastic-button:active {
+            transform: translatey(6px);
+            box-shadow: 0 2px 0 0 rgba(0, 85, 198, 0.2), 0 5px 10px -2px rgba(0, 85, 198, 0.1)
+        }
+
+        /* Entrance Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        /* Path Line Animation */
+        @keyframes dashFlow {
+            to {
+                stroke-dashoffset: -24;
+            }
+        }
+        .animate-path-flow {
+            stroke-dasharray: 12 8;
+            animation: dashFlow 3s linear infinite;
+        }
+
+        /* Active Node Pulse */
+        @keyframes softPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 85, 198, 0.4); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 12px rgba(0, 85, 198, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 85, 198, 0); }
+        }
+        .animate-soft-pulse {
+            animation: softPulse 2.5s infinite ease-in-out;
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-10px); } 
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-x-hidden pb-32 adventure-map-bg min-h-screen">
+<!-- Top Navigation Anchor -->
+<header class="w-full top-0 sticky z-50 bg-white border-b border-outline-variant/20 shadow-sm">
+<div class="flex justify-between items-center px-container-margin py-base w-full max-w-7xl mx-auto"><div class="flex items-center gap-4"><h1 class="font-display text-headline-md font-extrabold text-primary tracking-tight">E-Learning</h1></div><div class="flex items-center gap-3"><a href="{{DATA:SCREEN:SCREEN_133}}" class="flex items-center gap-1.5 bg-[#FFF9F2] px-4 py-2 rounded-full border border-[#FFE7CC]/50 hover:bg-[#FFE7CC] transition-colors"><span class="material-symbols-outlined text-[#FF6B00] text-[22px]" style="font-variation-settings: &quot;FILL&quot; 1;">local_fire_department</span><span class="font-display text-label-lg text-[#FF6B00] font-bold">525</span></a><a href="{{DATA:SCREEN:SCREEN_121}}" class="flex items-center gap-1.5 bg-[#F0F5FF] px-4 py-2 rounded-full border border-[#D9E2FF]/50 hover:bg-[#D9E2FF] transition-colors"><span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings: &quot;FILL&quot; 1;">diamond</span><span class="font-display text-label-lg text-primary font-bold">1200</span></a></div></div>
+</header>
+<main class="max-w-md mx-auto px-container-margin pt-stack-lg relative">
+<!-- Level Progress Header -->
+<div class="bg-surface-container-lowest p-stack-md rounded-lg shadow-[0_4px_16px_0_rgba(0,85,198,0.04)] mb-stack-lg border-b-4 border-primary-container relative overflow-hidden animate-fade-up">
+<div class="flex justify-between items-end mb-4">
+<div>
+<span class="font-label-sm text-outline uppercase tracking-wider">Current Level</span>
+<h2 class="font-display text-headline-lg-mobile text-primary">Unit 15: Explorer</h2>
+</div>
+<div class="text-right">
+<span class="font-display text-headline-md text-secondary">68%</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="h-4 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[68%] rounded-full shadow-[0_0_8px_rgba(253,157,6,0.5)]"></div>
+</div>
+<div class="mt-4 flex justify-between items-center">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-secondary">emoji_events</span>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-tertiary">star</span>
+</div>
+</div>
+<span class="font-label-sm text-on-surface-variant">2,450 XP to Next Rank</span>
+</div>
+</div>
+<!-- Adventure Map Layout -->
+<div class="relative py-12 flex flex-col items-center gap-32" id="path-container">
+<!-- SVG Connection Lines (Dynamic Curved Path) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-0" id="dynamic-path-svg" preserveAspectRatio="none">
+<path class="animate-path-flow" d="M 80.0000057220459 144.00000762939453 C 80.0000057220459 226.98889541625977, 194.8166790008545 226.98889541625977, 194.8166790008545 309.977783203125" fill="none" stroke="#c2c6d7" stroke-linecap="round" stroke-width="6"></path>
+<path class="animate-path-flow" d="M 194.8166790008545 441.4624328613281 C 194.8166790008545 544.7312164306641, 88.00000190734863 544.7312164306641, 88.00000190734863 648" fill="none" stroke="#c2c6d7" stroke-linecap="round" stroke-width="6"></path>
+<path class="animate-path-flow" d="M 88.00000190734863 728.0000076293945 C 88.00000190734863 812.0000038146973, 231.46667671203613 812.0000038146973, 231.46667671203613 896" fill="none" stroke="#c2c6d7" stroke-linecap="round" stroke-width="6"></path>
+</svg>
+<!-- Mission Node 1: Completed -->
+<div class="relative z-10 animate-fade-up node-item self-start ml-8" style="animation-delay: 0.1s">
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-tertiary text-on-tertiary px-3 py-1 rounded-full text-label-sm font-bold shadow-md">MASTERED</div>
+<button class="w-24 h-24 rounded-full bg-tertiary-container text-white border-[6px] border-tertiary shadow-[0_10px_0_0_#00531c] flex items-center justify-center hover:scale-105 active:translate-y-2 active:shadow-none transition-all">
+<span class="material-symbols-outlined text-[48px]" style="font-variation-settings: &quot;FILL&quot; 1;">done_all</span>
+</button>
+<div class="mt-4 text-center">
+<p class="font-headline-md text-on-surface">The Cafe</p>
+</div>
+</div>
+<!-- Mission Node 2: Active -->
+<div class="relative z-10 floating animate-fade-up node-item self-end mr-8" style="animation-delay: 0.2s">
+<div class="absolute -top-16 left-1/2 -translate-x-1/2 bg-secondary-container text-on-secondary-container px-4 py-2 rounded-xl text-label-lg font-bold shadow-lg animate-pulse whitespace-nowrap">START HERE</div>
+<a href="{{DATA:SCREEN:SCREEN_105}}" class="w-32 h-32 rounded-full bg-primary-container text-white border-[8px] border-primary elastic-button flex flex-col items-center justify-center animate-soft-pulse no-underline"><span class="material-symbols-outlined text-[56px]" style="font-variation-settings: &quot;FILL&quot; 1;">exercise</span><span class="font-label-lg mt-[-4px]">PLAY</span></a>
+<div class="mt-6 text-center">
+<p class="font-display text-headline-md text-primary font-extrabold">Public Transport</p>
+<p class="font-label-sm text-outline">Lesson 4 of 10</p>
+</div>
+</div>
+<!-- Mission Node 3: Locked -->
+<div class="relative z-10 opacity-60 animate-fade-up node-item self-start ml-12" style="animation-delay: 0.3s">
+<button class="w-20 h-20 rounded-full bg-surface-variant text-on-surface-variant border-[6px] border-outline-variant shadow-[0_8px_0_0_#727786] flex items-center justify-center cursor-not-allowed">
+<span class="material-symbols-outlined text-[36px]">lock</span>
+</button>
+<div class="mt-4 text-center">
+<p class="font-headline-md text-on-surface-variant">Airport Check-in</p>
+</div>
+</div>
+<!-- Mission Node 4: Hidden/Mist -->
+<div class="relative z-10 opacity-30 blur-[1px] animate-fade-up node-item self-end mr-20" style="animation-delay: 0.4s">
+<button class="w-20 h-20 rounded-full bg-surface-variant text-on-surface-variant border-[6px] border-outline-variant shadow-[0_8px_0_0_#727786] flex items-center justify-center">
+<span class="material-symbols-outlined text-[36px]">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Quest Card Overlay -->
+<section class="mt-stack-lg mb-8 animate-fade-up" style="animation-delay: 0.5s">
+<div class="bg-surface-container-low rounded-lg p-stack-md border-l-4 border-secondary-container shadow-md">
+<div class="flex items-center gap-3 mb-stack-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: &quot;FILL&quot; 1;">military_tech</span>
+</div>
+<h3 class="font-headline-md text-on-surface">Daily Quests</h3>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-label-lg text-on-surface">Learn 10 new verbs</p>
+<p class="font-label-sm text-outline">7/10 completed</p>
+</div>
+<div class="w-16 h-16 relative">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-secondary-container" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="175.9" stroke-dashoffset="52.7" stroke-width="4"></circle>
+</svg>
+<span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-label-sm text-secondary font-bold">70%</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-stack-md bg-secondary text-white py-3 rounded-full font-label-lg active:scale-95 transition-all shadow-md" onclick="window.location.href='{{DATA:SCREEN:SCREEN_133}}'">
+                    CLAIM REWARDS
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<!-- Floating Action Button -->
+<div class="fixed right-6 bottom-24 z-40">
+
+</div>
+<script>
+        // Micro-interaction: Scale down on click for all buttons
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.95)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = '';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = '';
+            });
+        });
+
+        // Dynamic S-Curve Path Logic
+        function updateCurvedPaths() {
+            const nodes = document.querySelectorAll('.node-item');
+            const svg = document.getElementById('dynamic-path-svg');
+            const paths = svg.querySelectorAll('path');
+            const svgRect = svg.getBoundingClientRect();
+
+            nodes.forEach((node, i) => {
+                if (i < nodes.length - 1) {
+                    const btn1 = node.querySelector('button');
+                    const btn2 = nodes[i+1].querySelector('button');
+                    
+                    const r1 = btn1.getBoundingClientRect();
+                    const r2 = btn2.getBoundingClientRect();
+
+                    const x1 = r1.left + (r1.width / 2) - svgRect.left;
+                    const y1 = r1.bottom - svgRect.top;
+                    
+                    const x2 = r2.left + (r2.width / 2) - svgRect.left;
+                    const y2 = r2.top - svgRect.top;
+
+                    // Deep immersive winding path using cubic bezier
+                    // Control points are adjusted to create pronounced "S" curves
+                    const verticalDistance = y2 - y1;
+                    const horizontalDistance = x2 - x1;
+                    
+                    // Control points for a smooth S-curve
+                    const cp1x = x1;
+                    const cp1y = y1 + verticalDistance * 0.5;
+                    const cp2x = x2;
+                    const cp2y = y2 - verticalDistance * 0.5;
+
+                    const d = `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
+                    
+                    if (paths[i]) {
+                        paths[i].setAttribute('d', d);
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('load', updateCurvedPaths);
+        window.addEventListener('resize', updateCurvedPaths);
+
+        // Parallax effect (Gentler for curved paths)
+        window.addEventListener('scroll', () => {
+            const nodes = document.querySelectorAll('.node-item');
+            const scrolled = window.pageYOffset;
+            nodes.forEach((node, index) => {
+                const speed = 0.02 + (index * 0.005);
+                node.style.transform = `translateY(${scrolled * speed}px)`;
+            });
+            // Update paths while scrolling to ensure connections stay attached
+            requestAnimationFrame(updateCurvedPaths);
+        });
+    </script>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-outline-variant/10 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] rounded-t-[2.5rem]"><div class="flex justify-around items-center max-w-md mx-auto h-[88px] px-4">
+    <a class="flex flex-col items-center justify-center gap-1 transition-all" href="{{DATA:SCREEN:SCREEN_81}}">
+        <div class="bg-[#1d70f5] px-6 py-3 rounded-full flex items-center justify-center shadow-lg shadow-primary/20 transition-transform active:scale-95">
+            <span class="material-symbols-outlined text-[28px] text-white" style="font-variation-settings: 'FILL' 1;">school</span>
+        </div>
+        <span class="text-[13px] font-bold text-[#1d70f5]">Học</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 transition-all group" href="#">
+        <div class="p-2 transition-transform group-active:scale-95">
+            <span class="material-symbols-outlined text-[28px] text-on-surface-variant/60">menu_book</span>
+        </div>
+        <span class="text-[13px] font-bold text-on-surface-variant/60">Luyện tập</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 transition-all group" href="{{DATA:SCREEN:SCREEN_131}}">
+        <div class="p-2 transition-transform group-active:scale-95">
+            <span class="material-symbols-outlined text-[28px] text-on-surface-variant/60">bar_chart</span>
+        </div>
+        <span class="text-[13px] font-bold text-on-surface-variant/60">Xếp hạng</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 transition-all group" href="{{DATA:SCREEN:SCREEN_112}}">
+        <div class="p-2 transition-transform group-active:scale-95">
+            <span class="material-symbols-outlined text-[28px] text-on-surface-variant/60">person</span>
+        </div>
+        <span class="text-[13px] font-bold text-on-surface-variant/60">Hồ sơ</span>
+    </a>
+</div></nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body></html>

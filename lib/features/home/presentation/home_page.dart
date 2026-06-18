@@ -7,52 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../../../routes/app_routes.dart';
-
-const Color _kPrimary = Color(0xFF0055C6);
-const Color _kOrange = Color(0xFFFD9D06);
-const Color _kGreen = Color(0xFF008733);
-const Color _kRed = Color(0xFFFF4B4B);
-
-// ── Providers ──────────────────────────────────────────────────────────────
-
-/// Fetches enrolled course detail with nested units+lessons from backend.
-final _enrolledCourseProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>?>((ref) async {
-      final prefs = await SharedPreferences.getInstance();
-      final courseId = prefs.getString('enrolled_course_id');
-      if (courseId == null) return null;
-      final dio = ref.watch(authDioProvider);
-      final response = await dio.get<Map<String, dynamic>>(
-        '/api/courses/$courseId',
-      );
-      return response.data?['data'] as Map<String, dynamic>?;
-    });
-
-/// Fetches the set of lesson IDs the current user has completed.
-final _completedLessonsProvider = FutureProvider.autoDispose<Set<String>>((
-  ref,
-) async {
-  final token = ref.watch(clerkTokenProvider);
-  if (token == null) return const {};
-  try {
-    final dio = ref.watch(authDioProvider);
-    final response = await dio.get<Map<String, dynamic>>('/api/progress/me');
-    final list = (response.data?['data'] as List<dynamic>?) ?? [];
-    final completed = <String>{};
-    for (final item in list) {
-      if (item['is_completed'] == true) {
-        final id = item['lesson_id'] as String?;
-        if (id != null && id.isNotEmpty) completed.add(id);
-      }
-    }
-    return completed;
-  } catch (_) {
-    return const {};
-  }
-});
-
-// ── Home page ──────────────────────────────────────────────────────────────
+import '../../auth/presentation/screens/profile_screen.dart';
+import '../../hearts/presentation/providers/heart_providers.dart';
+import '../../hearts/presentation/widgets/heart_indicator.dart';
+import '../../leaderboard/presentation/screens/leaderboard_screen.dart';
+import '../../lessons/presentation/providers/lessons_providers.dart';
+import '../../lessons/presentation/screens/course_detail_screen.dart';
+import '../../lessons/presentation/screens/course_path_screen.dart';
+import '../../practice/presentation/screens/practice_screen.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -114,18 +76,28 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: IndexedStack(
-        index: _navIndex,
-        children: [
-          _LearnTab(pulse: _pulse, float: _float, path: _path),
-          const _PlaceholderTab(
-            icon: Icons.bar_chart_rounded,
-            label: 'Leaderboard',
-          ),
-          const _PlaceholderTab(icon: Icons.shield_rounded, label: 'Quests'),
-          _ProfileTab(),
-        ],
+      appBar: _currentIndex == 0
+          ? null
+          : AppBar(
+              title: Text(_getAppBarTitle()),
+              centerTitle: true,
+              actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
+            ),
+      body: Builder(
+        builder: (context) {
+          switch (_currentIndex) {
+            case 0:
+              return const CoursePathScreen();
+            case 1:
+              return const PracticeScreen();
+            case 2:
+              return const LeaderboardScreen();
+            case 3:
+              return const ProfileScreen();
+            default:
+              return const SizedBox.shrink();
+          }
+        },
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _navIndex,

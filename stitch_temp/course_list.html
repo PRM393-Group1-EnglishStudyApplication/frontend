@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LinguaQuest - Explore Courses</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#0058cb",
+                        "tertiary-fixed-dim": "#53e16f",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed-variant": "#673d00",
+                        "on-tertiary-fixed": "#002107",
+                        "primary-fixed-dim": "#b0c6ff",
+                        "on-error": "#ffffff",
+                        "tertiary": "#006b27",
+                        "on-primary-fixed": "#001945",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#00531c",
+                        "on-secondary-fixed": "#2b1700",
+                        "surface-container-high": "#e6e8ea",
+                        "on-surface-variant": "#424654",
+                        "on-secondary-container": "#653c00",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb868",
+                        "surface-container-low": "#f2f4f6",
+                        "background": "#f7f9fb",
+                        "inverse-surface": "#2d3133",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container": "#eceef0",
+                        "on-primary-container": "#fefcff",
+                        "surface": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#008733",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b0c6ff",
+                        "outline": "#727786",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#ffddbb",
+                        "primary-container": "#176df2",
+                        "outline-variant": "#c2c6d7",
+                        "on-tertiary-container": "#f7fff2",
+                        "secondary-fixed": "#ffddbb",
+                        "primary": "#0055c6",
+                        "on-surface": "#191c1e",
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#885200",
+                        "on-primary-fixed-variant": "#00429c",
+                        "on-background": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-margin": "20px",
+                        "base": "8px",
+                        "stack-lg": "40px",
+                        "gutter": "16px",
+                        "stack-sm": "12px",
+                        "stack-md": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Nunito Sans"],
+                        "label-sm": ["Nunito Sans"],
+                        "body-md": ["Nunito Sans"],
+                        "headline-lg-mobile": ["Nunito Sans"],
+                        "display": ["Nunito Sans"],
+                        "body-lg": ["Nunito Sans"],
+                        "headline-md": ["Nunito Sans"],
+                        "label-lg": ["Nunito Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Nunito Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .active-press:active {
+            transform: translateY(2px);
+        }
+        .course-card-shadow {
+            box-shadow: 0 4px 16px rgba(0, 85, 198, 0.04);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 bg-surface/90 backdrop-blur-md shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-headline-md">language</span>
+<h1 class="font-display text-primary tracking-tight text-headline-md-mobile md:text-headline-md">LinguaQuest</h1>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-high px-3 py-1.5 rounded-full">
+<span class="font-label-lg text-label-lg text-on-surface-variant">12 🔥  500 💎  5 ❤️</span>
+</div>
+</header>
+<main class="pt-24 pb-32 px-container-margin max-w-5xl mx-auto">
+<!-- Search and Filter Section -->
+<section class="mb-stack-lg">
+<div class="relative group mb-stack-md">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">search</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-lowest border-2 border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-body-lg font-body-lg placeholder:text-outline/60" placeholder="Find your next challenge..." type="text"/>
+</div>
+<!-- Filter Chips - Level -->
+<div class="mb-stack-sm">
+<p class="font-label-lg text-label-lg text-on-surface-variant mb-2 ml-1">Difficulty</p>
+<div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-primary text-on-primary font-label-lg text-label-lg active-press">All Levels</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Beginner</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Intermediate</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Advanced</button>
+</div>
+</div>
+<!-- Filter Chips - Topic -->
+<div>
+<p class="font-label-lg text-label-lg text-on-surface-variant mb-2 ml-1">Popular Topics</p>
+<div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Travel</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-lg text-label-lg active-press">Business</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Daily Life</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Culture</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-highest transition-colors active-press">Grammar</button>
+</div>
+</div>
+</section>
+<!-- Course Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Course Card 1 - In Progress -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden course-card-shadow border border-outline-variant/10 group active-press transition-transform">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A diverse group of young professionals sitting together in a sun-drenched, modern office space with minimalist wooden furniture and vibrant green indoor plants. They are engaged in an upbeat, casual conversation, smiling and gesturing warmly. The scene is captured in a high-key, airy photographic style that emphasizes a professional yet friendly learning atmosphere, dominated by soft primary blue and warm white tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc5BmV77gj1Etaa5pCnFH7a4Athuue3YuXY8drEBRStEUxnYM7IRBnJNh7igYbb0RWCScQUHf4c7JZjQzVQfQe9L0xZM9UY8EKGF6ZcOwyyqiMaQDj9BaLdIRkOj5BkgcNkdFUfcqz7D9dPnQbEP0oDrjwAKfjHpB-69RYSgc8iCj1zZMmMgCgh0QqUfL3MtU8O-P6Q6_TF-h_F5oB64mMAXk8u451HGaapFE1vZ_3EN5rVHuZce9u2l2fHOtwKjkNoZqvVmiKSN5k"/>
+<div class="absolute top-3 right-3 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm font-label-sm">
+                        Intermediate
+                    </div>
+</div>
+<div class="p-4">
+<h3 class="font-headline-md text-headline-md mb-1">Tiếng Anh Giao Tiếp Cơ Bản</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">menu_book</span> 24 Lessons
+                    </p>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-label-sm font-label-sm text-primary">
+<span>Your Progress</span>
+<span>65%</span>
+</div>
+<div class="h-3 w-full bg-primary/10 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full" style="width: 65%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Course Card 2 - New -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden course-card-shadow border border-outline-variant/10 group active-press transition-transform">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="An overhead flat-lay shot of a clean, minimalist workspace featuring a sleek laptop, an open leather notebook with handwritten notes in elegant script, and a ceramic cup of latte with simple latte art. The background is a soft light gray marble, providing a sophisticated and focused mood. The lighting is soft and natural, emphasizing a serene environment for study and personal growth, aligned with a vibrant minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz0HVvGSZNqhzk044bHmT8WUPn1n2LFwG45ylrmpWmkZwoe51-o_sVbfITPvEYnd17Py34_0PyoGR7-Mzh4DSHDXvCENwk6QW3U0DMzswmocHbOY9ILDJ7u1cjxCTKmn8tM3NT6c0fbyPz2n_cCEvLpwkyPBNNLOxVGSiYixzNZxolPL3Ogzo8l9yJvHyVpn5UaKWvs_lPotYkMZR9q_9W1SWzHCDggtb6xSRLAqZo4li03lcOGBzpMNLRJNlK4wv6WdEPbC_bJLq0"/>
+<div class="absolute top-3 right-3 bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-label-sm font-label-sm">
+                        Beginner
+                    </div>
+</div>
+<div class="p-4">
+<h3 class="font-headline-md text-headline-md mb-1">Business Correspondence</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">menu_book</span> 12 Lessons
+                    </p>
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg shadow-sm hover:bg-surface-tint transition-colors">
+                        Start Course
+                    </button>
+</div>
+</div>
+<!-- Course Card 3 - Mastered -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden course-card-shadow border-b-[3px] border-tertiary-fixed-dim group active-press transition-transform">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A warm, atmospheric image of a cozy European cafe exterior at twilight, with golden light spilling from the windows onto cobblestone streets. Tables are set with small espresso cups and pastries, creating an inviting, cultured setting. The artistic style is soft and slightly romantic, emphasizing the beauty of travel and cultural immersion, with rich deep blues and vibrant amber accents that evoke a sense of adventure and mastery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXWULFGQDWroEECWKTqkD52ZHzF7eEZMDprNw-D4RugjSV0TyZ9TOW4GXJ1t9Yd9zRVUZJIZjurq5ihy8TQiTs3R1Srop4xm0vxTEKi6imKnPjXd6ljFm4sHqpKoKrYdD37LH4LdJ9EOmZ28Oi5pj5O3a-NyWM6r-cNjPAoiUGE8ucvbEkCKWM0RWwI8Jz5uvBGG1eDMqSkiHmPKgwD9FY6c5T32OLhvUhZWVUpVyoXdR7firfxBj1yFBd6seEkPYDssf7xlY30AdA"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest text-tertiary px-3 py-1 rounded-full text-label-sm font-label-sm flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1">check_circle</span> Mastered
+                    </div>
+</div>
+<div class="p-4">
+<h3 class="font-headline-md text-headline-md mb-1">Traveler's Phrasebook</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">menu_book</span> 18 Lessons
+                    </p>
+<button class="w-full py-3 border-2 border-primary text-primary rounded-xl font-label-lg text-label-lg hover:bg-primary/5 transition-colors">
+                        Review Content
+                    </button>
+</div>
+</div>
+<!-- Course Card 4 - New -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden course-card-shadow border border-outline-variant/10 group active-press transition-transform">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A high-tech digital interface mockup showing floating holographic speech bubbles and data nodes connecting across a dark blue globe. The design is sleek and futuristic, using neon blue and green glowing lines to represent communication and global connectivity. The overall mood is innovative and high-energy, perfectly capturing the essence of advanced language learning technology and global networking in a clean, modern digital art style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd-6CAOveinSHKDNNY9cUkmGVDsOrPGgqfLnlOb9UHjTSlHEz5KHV57ck3hpyrU4yWKP1-fJCP68sa3yv8uh2G96A397rR7ELsHgMqxexxgta5OVFAZ50nDOkxcm0imjupm8xF-Tm1TwpTY71hHhMjDnL93hIgHKVRPXbZXuM_bIpDDOdkr_BAh8dJPKNJipy7e9Oh99TE78BA51Z-0t2vk1o3I7JHQU4h6Ug_mF_S_GVeuWq6OYL4aUFRW1kspqvgCd8Gbr9JnWGg"/>
+<div class="absolute top-3 right-3 bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-sm font-label-sm">
+                        Advanced
+                    </div>
+</div>
+<div class="p-4">
+<h3 class="font-headline-md text-headline-md mb-1">Public Speaking Skills</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">menu_book</span> 30 Lessons
+                    </p>
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg shadow-sm hover:bg-surface-tint transition-colors">
+                        Unlock Course
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-base pb-6 pt-2 bg-surface border-t border-outline-variant/30 shadow-[0_-4px_16px_rgba(0,85,198,0.04)] rounded-t-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1.5 hover:bg-surface-container-low transition-all active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-3 py-1.5 active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">fitness_center</span>
+<span class="font-label-sm text-label-sm">Practice</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1.5 hover:bg-surface-container-low transition-all active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-sm text-label-sm">League</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1.5 hover:bg-surface-container-low transition-all active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined">military_tech</span>
+<span class="font-label-sm text-label-sm">Quests</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1.5 hover:bg-surface-container-low transition-all active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for filter chips
+        const chips = document.querySelectorAll('button.rounded-full');
+        chips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                // Determine group (Level or Topic)
+                const parent = this.parentElement;
+                const groupChips = parent.querySelectorAll('button');
+                
+                groupChips.forEach(c => {
+                    c.classList.remove('bg-primary', 'text-on-primary', 'bg-secondary-container', 'text-on-secondary-container');
+                    c.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+                });
+                
+                // Active state logic - if it's the second group (topics), use orange color
+                if (this.textContent === 'Business' || parent.previousElementSibling.textContent === 'Popular Topics') {
+                    this.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+                    this.classList.add('bg-secondary-container', 'text-on-secondary-container');
+                } else {
+                    this.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+                    this.classList.add('bg-primary', 'text-on-primary');
+                }
+            });
+        });
+    </script>
+</body></html>
