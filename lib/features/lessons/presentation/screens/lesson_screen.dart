@@ -9,6 +9,8 @@ import '../../../../features/progress/presentation/providers/progress_providers.
 import '../../data/models/exercise_model.dart';
 import '../../data/models/lesson_model.dart';
 import '../widgets/out_of_hearts_notice_sheet.dart';
+import '../widgets/matching_exercise.dart';
+import 'package:prm_frontend/core/utils/matching_codec.dart';
 import '../providers/lessons_providers.dart';
 import '../providers/course_providers.dart';
 
@@ -30,6 +32,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   final Map<String, String> _userAnswers = {};
   String _currentInputAnswer = '';
   String? _selectedOptionText;
+  String? _matchingAnswer;
 
   bool _isChecked = false;
   bool _isAnswerCorrect = false;
@@ -352,6 +355,17 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 // Render Input based on type
                 if (exercise.exerciseType == 'multiple_choice')
                   _buildMultipleChoiceInput(theme, exercise.options)
+                else if (exercise.exerciseType == 'matching' && MatchingCodec.decodePairs(exercise.options).length >= 2)
+                  MatchingExercise(
+                    key: ValueKey(exercise.id),
+                    options: exercise.options,
+                    enabled: !_isChecked,
+                    onAnswerChanged: (ans) {
+                      setState(() {
+                        _matchingAnswer = ans;
+                      });
+                    },
+                  )
                 else
                   _buildTextInput(theme),
               ],
@@ -387,6 +401,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     if (_currentInputAnswer.trim().isNotEmpty) {
       return true;
     }
+    if (_matchingAnswer != null && _matchingAnswer!.isNotEmpty) {
+      return true;
+    }
     return false;
   }
 
@@ -396,7 +413,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       // Perform Check
       final String userAnswer = exercise.exerciseType == 'multiple_choice'
           ? (_selectedOptionText ?? '')
-          : _currentInputAnswer.trim();
+          : exercise.exerciseType == 'matching'
+              ? (_matchingAnswer ?? '')
+              : _currentInputAnswer.trim();
 
       _userAnswers[exercise.id] = userAnswer;
 
@@ -443,6 +462,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           _isChecked = false;
           _currentInputAnswer = '';
           _selectedOptionText = null;
+          _matchingAnswer = null;
         });
       } else {
         // Submit answers to server

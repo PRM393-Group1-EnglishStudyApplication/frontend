@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../lessons/data/models/exercise_model.dart';
+import 'package:prm_frontend/core/utils/matching_codec.dart';
 import '../providers/admin_providers.dart';
 
 class OptionDraft {
@@ -13,6 +14,18 @@ class OptionDraft {
     this.id = '',
     this.text = '',
     this.isCorrect = false,
+  });
+}
+
+class PairDraft {
+  String id;
+  String left;
+  String right;
+
+  PairDraft({
+    this.id = '',
+    this.left = '',
+    this.right = '',
   });
 }
 
@@ -39,6 +52,7 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
   late TextEditingController _audioUrlController;
   late TextEditingController _correctAnswerController;
   List<OptionDraft> _options = [];
+  List<PairDraft> _pairs = [];
   bool _isSaving = false;
 
   @override
@@ -50,19 +64,52 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
     _audioUrlController = TextEditingController(text: ex?.audioUrl ?? '');
     _correctAnswerController = TextEditingController(text: ex?.correctAnswer ?? '');
 
-
-    if (ex != null && ex.options.isNotEmpty) {
-      _options = ex.options
-          .map((opt) => OptionDraft(
-                id: opt.id,
-                text: opt.optionText,
-                isCorrect: opt.isCorrect,
-              ))
-          .toList();
+    if (ex != null) {
+      if (ex.exerciseType == 'matching') {
+        _pairs = MatchingCodec.decodePairs(ex.options).map((p) => PairDraft(
+          id: p.id ?? '',
+          left: p.left,
+          right: p.right,
+        )).toList();
+        if (_pairs.isEmpty) {
+          _pairs = [
+            PairDraft(),
+            PairDraft(),
+          ];
+        }
+        // Seed default options just in case they switch type
+        _options = [
+          OptionDraft(text: '', isCorrect: true),
+          OptionDraft(text: '', isCorrect: false),
+        ];
+      } else {
+        if (ex.options.isNotEmpty) {
+          _options = ex.options
+              .map((opt) => OptionDraft(
+                    id: opt.id,
+                    text: opt.optionText,
+                    isCorrect: opt.isCorrect,
+                  ))
+              .toList();
+        } else {
+          _options = [
+            OptionDraft(text: '', isCorrect: true),
+            OptionDraft(text: '', isCorrect: false),
+          ];
+        }
+        _pairs = [
+          PairDraft(),
+          PairDraft(),
+        ];
+      }
     } else {
       _options = [
         OptionDraft(text: '', isCorrect: true),
         OptionDraft(text: '', isCorrect: false),
+      ];
+      _pairs = [
+        PairDraft(),
+        PairDraft(),
       ];
     }
   }
@@ -108,8 +155,35 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
     return _exerciseType == 'multiple_choice' || _exerciseType == 'listening';
   }
 
+  bool get _isMatching {
+    return _exerciseType == 'matching';
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_isMatching) {
+      final lefts = _pairs.map((p) => MatchingCodec.norm(p.left)).toList();
+      final rights = _pairs.map((p) => MatchingCodec.norm(p.right)).toList();
+      if (lefts.toSet().length != lefts.length) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Các vế trái không được trùng lặp.')),
+        );
+        return;
+      }
+      if (rights.toSet().length != rights.length) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Các vế phải không được trùng lặp.')),
+        );
+        return;
+      }
+      if (_pairs.length < 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bài tập nối cặp cần ít nhất 2 cặp từ.')),
+        );
+        return;
+      }
+    }
 
     setState(() {
       _isSaving = true;
@@ -121,7 +195,13 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
     
     // Determine correct answer
     String correctAnswer = '';
-    if (_requiresOptions) {
+    if (_isMatching) {
+      final validPairs = _pairs
+          .where((p) => p.left.trim().isNotEmpty && p.right.trim().isNotEmpty)
+          .map((p) => MatchingPair(id: p.id, left: p.left, right: p.right))
+          .toList();
+      correctAnswer = MatchingCodec.canonicalAnswer(validPairs);
+    } else if (_requiresOptions) {
       final correctOpt = _options.firstWhere((opt) => opt.isCorrect, orElse: () => _options.first);
       correctAnswer = correctOpt.text.trim();
     } else {
@@ -138,6 +218,14 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
               .map((opt) => <String, dynamic>{
                     'option_text': opt.text.trim(),
                     'is_correct': opt.isCorrect,
+                  })
+              .toList();
+        } else if (_isMatching) {
+          optionsPayload = _pairs
+              .where((p) => p.left.trim().isNotEmpty && p.right.trim().isNotEmpty)
+              .map((p) => <String, dynamic>{
+                    'option_text': MatchingCodec.encodeOption(p.left.trim(), p.right.trim()),
+                    'is_correct': false,
                   })
               .toList();
         }
@@ -162,37 +250,70 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
         );
 
         // Update Options
-        if (_requiresOptions) {
-          final originalOptions = widget.exercise!.options;
+        final originalOptions = widget.exercise!.options;
 
+        if (!_requiresOptions && !_isMatching) {
+          // Delete all original options if changed to a no-options type (translate/fill_blank)
+          for (final orig in originalOptions) {
+            await adminService.deleteOption(orig.id);
+          }
+        } else {
           // Find deleted options
           for (final orig in originalOptions) {
-            final exists = _options.any((draft) => draft.id == orig.id);
+            final exists = _requiresOptions
+                ? _options.any((draft) => draft.id == orig.id)
+                : _pairs.any((draft) => draft.id == orig.id);
             if (!exists) {
               await adminService.deleteOption(orig.id);
             }
           }
 
           // Add / Update options
-          for (final draft in _options) {
-            if (draft.text.trim().isEmpty) continue;
+          if (_requiresOptions) {
+            for (final draft in _options) {
+              if (draft.text.trim().isEmpty) continue;
 
-            if (draft.id.isEmpty) {
-              // Create new option
-              await adminService.createOption(
-                exerciseId: exerciseId,
-                optionText: draft.text.trim(),
-                isCorrect: draft.isCorrect,
-              );
-            } else {
-              // Check if modified
-              final orig = originalOptions.firstWhere((o) => o.id == draft.id);
-              if (orig.optionText != draft.text.trim() || orig.isCorrect != draft.isCorrect) {
-                await adminService.updateOption(
-                  optionId: draft.id,
+              if (draft.id.isEmpty) {
+                // Create new option
+                await adminService.createOption(
+                  exerciseId: exerciseId,
                   optionText: draft.text.trim(),
                   isCorrect: draft.isCorrect,
                 );
+              } else {
+                // Check if modified
+                final orig = originalOptions.firstWhere((o) => o.id == draft.id);
+                if (orig.optionText != draft.text.trim() || orig.isCorrect != draft.isCorrect) {
+                  await adminService.updateOption(
+                    optionId: draft.id,
+                    optionText: draft.text.trim(),
+                    isCorrect: draft.isCorrect,
+                  );
+                }
+              }
+            }
+          } else if (_isMatching) {
+            for (final draft in _pairs) {
+              if (draft.left.trim().isEmpty || draft.right.trim().isEmpty) continue;
+              final encoded = MatchingCodec.encodeOption(draft.left.trim(), draft.right.trim());
+
+              if (draft.id.isEmpty) {
+                // Create new option
+                await adminService.createOption(
+                  exerciseId: exerciseId,
+                  optionText: encoded,
+                  isCorrect: false,
+                );
+              } else {
+                // Check if modified
+                final orig = originalOptions.firstWhere((o) => o.id == draft.id);
+                if (orig.optionText != encoded || orig.isCorrect != false) {
+                  await adminService.updateOption(
+                    optionId: draft.id,
+                    optionText: encoded,
+                    isCorrect: false,
+                  );
+                }
               }
             }
           }
@@ -310,7 +431,9 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
                       ],
 
                       // Options or text input
-                      if (_requiresOptions) ...[
+                      if (_isMatching) ...[
+                        _buildMatchingPreviewWidget(theme),
+                      ] else if (_requiresOptions) ...[
                         ..._options.where((opt) => opt.text.trim().isNotEmpty).map((opt) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
@@ -391,13 +514,15 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
             // Exercise Type Selector
             Text('Loại câu hỏi', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _buildTypeChip('multiple_choice', 'Trắc nghiệm'),
-                const SizedBox(width: 8),
                 _buildTypeChip('listening', 'Nghe'),
-                const SizedBox(width: 8),
                 _buildTypeChip('translate', 'Dịch thuật'),
+                _buildTypeChip('fill_blank', 'Điền từ'),
+                _buildTypeChip('matching', 'Nối cặp'),
               ],
             ),
             const SizedBox(height: 20),
@@ -466,7 +591,123 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
             const SizedBox(height: 16),
 
             // Answer options or correct answer text
-            if (_requiresOptions)
+            // Answer options or correct answer text
+            if (_isMatching)
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(127)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Các cặp từ nối',
+                              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          Text(
+                            '(Nhập vế trái & vế phải tương ứng)',
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _pairs.length,
+                        itemBuilder: (context, index) {
+                          final pair = _pairs[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: pair.left,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Vế trái',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                    onChanged: (val) {
+                                      pair.left = val;
+                                    },
+                                    validator: (val) {
+                                      if (_isMatching) {
+                                        return MatchingCodec.validateSide(val);
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 12.0),
+                                  child: Icon(Icons.link_rounded, color: Colors.grey, size: 20),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: pair.right,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Vế phải',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                    onChanged: (val) {
+                                      pair.right = val;
+                                    },
+                                    validator: (val) {
+                                      if (_isMatching) {
+                                        return MatchingCodec.validateSide(val);
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_rounded, color: Colors.grey),
+                                  onPressed: () {
+                                    if (_pairs.length <= 2) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Bài tập nối cặp cần ít nhất 2 cặp từ.')),
+                                      );
+                                      return;
+                                    }
+                                    setState(() {
+                                      _pairs.removeAt(index);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _pairs.add(PairDraft());
+                          });
+                        },
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Thêm cặp từ'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_requiresOptions)
               Card(
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -571,12 +812,22 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
                           border: OutlineInputBorder(),
                         ),
                         validator: (val) {
-                          if (!_requiresOptions && (val == null || val.trim().isEmpty)) {
+                          if (!_requiresOptions && !_isMatching && (val == null || val.trim().isEmpty)) {
                             return 'Vui lòng nhập đáp án đúng';
                           }
                           return null;
                         },
                       ),
+                      if (_exerciseType == 'fill_blank') ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Dùng ___ trong đề bài để đánh dấu chỗ trống.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -612,6 +863,12 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
         if (val) {
           setState(() {
             _exerciseType = type;
+            if (_isMatching && _pairs.length < 2) {
+              _pairs = [
+                PairDraft(),
+                PairDraft(),
+              ];
+            }
           });
         }
       },
@@ -619,6 +876,69 @@ class _ExerciseEditorScreenState extends ConsumerState<ExerciseEditorScreen> {
       labelStyle: TextStyle(
         color: selected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurface,
         fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildMatchingPreviewWidget(ThemeData theme) {
+    final validPairs = _pairs.where((p) => p.left.trim().isNotEmpty && p.right.trim().isNotEmpty).toList();
+    if (validPairs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
+        child: Text(
+          'Chưa có cặp từ hợp lệ để hiển thị.',
+          style: TextStyle(fontStyle: FontStyle.italic),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    final lefts = validPairs.map((p) => p.left.trim()).toList();
+    final rights = validPairs.map((p) => p.right.trim()).toList()..shuffle();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Xem trước giao diện nối cặp:',
+          style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                children: lefts.map((leftText) => _buildPreviewTile(leftText, theme)).toList(),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                children: rights.map((rightText) => _buildPreviewTile(rightText, theme)).toList(),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewTile(String text, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
       ),
     );
   }
