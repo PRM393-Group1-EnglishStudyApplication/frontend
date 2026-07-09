@@ -38,8 +38,9 @@ final FutureProviderFamily<List<LessonModel>, String> lessonsDataProvider =
   return repository.getLessons(unitId);
 });
 
-final FutureProviderFamily<LessonDetailModel, String> lessonDetailDataProvider =
-    FutureProvider.family<LessonDetailModel, String>((Ref ref, String lessonId) async {
+// autoDispose de moi lan mo bai hoc lay mot bo cau hoi ngau nhien moi tu server.
+final AutoDisposeFutureProviderFamily<LessonDetailModel, String> lessonDetailDataProvider =
+    FutureProvider.autoDispose.family<LessonDetailModel, String>((Ref ref, String lessonId) async {
   final repository = ref.watch(lessonsRepositoryProvider);
   return repository.getLessonDetail(lessonId);
 });
