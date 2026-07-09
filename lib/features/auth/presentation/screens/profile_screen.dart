@@ -234,19 +234,21 @@ class ProfileScreen extends ConsumerWidget {
                   loading: () => const LinearProgressIndicator(),
                   error: (_, __) => const Text('Unable to load achievements'),
                 ),
-                const SizedBox(height: 28),
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => const AdminMainScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.admin_panel_settings_rounded),
-                  label: const Text('Admin course management'),
-                ),
+                if (user.isAdmin) ...[
+                  const SizedBox(height: 28),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (context) => const AdminMainScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.admin_panel_settings_rounded),
+                    label: const Text('Admin course management'),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () async {

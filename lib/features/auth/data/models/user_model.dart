@@ -10,6 +10,7 @@ class UserModel extends AppUser {
     required super.totalXp,
     required super.currentLevel,
     required super.streakCount,
+    super.role,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +23,7 @@ class UserModel extends AppUser {
       totalXp: (json['total_xp'] as num?)?.toInt() ?? 0,
       currentLevel: json['current_level'] as String? ?? 'beginner',
       streakCount: (json['streak_count'] as num?)?.toInt() ?? 0,
+      role: json['role'] as String? ?? 'student',
     );
   }
 
@@ -35,6 +37,7 @@ class UserModel extends AppUser {
       'total_xp': totalXp,
       'current_level': currentLevel,
       'streak_count': streakCount,
+      'role': role,
     };
   }
 }
