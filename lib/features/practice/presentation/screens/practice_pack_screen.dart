@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../features/auth/presentation/providers/auth_providers.dart';
-import '../../../../features/achievements/presentation/providers/achievements_providers.dart';
-import '../../../../features/hearts/presentation/providers/heart_providers.dart';
-import '../../../../features/leaderboard/presentation/providers/leaderboard_providers.dart';
-import '../../../../features/progress/presentation/providers/progress_providers.dart';
-import '../../data/models/exercise_model.dart';
-import '../../data/models/lesson_model.dart';
-import '../widgets/out_of_hearts_notice_sheet.dart';
-import '../widgets/matching_exercise.dart';
 import 'package:prm_frontend/core/utils/matching_codec.dart';
-import '../providers/lessons_providers.dart';
-import '../providers/course_providers.dart';
+import 'package:prm_frontend/features/achievements/presentation/providers/achievements_providers.dart';
+import 'package:prm_frontend/features/auth/presentation/providers/auth_providers.dart';
+import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
+import 'package:prm_frontend/features/leaderboard/presentation/providers/leaderboard_providers.dart';
+import 'package:prm_frontend/features/lessons/data/models/exercise_model.dart';
+import 'package:prm_frontend/features/lessons/presentation/widgets/matching_exercise.dart';
+import 'package:prm_frontend/features/lessons/presentation/widgets/out_of_hearts_notice_sheet.dart';
+import 'package:prm_frontend/features/practice/presentation/providers/practice_providers.dart';
+import 'package:prm_frontend/features/progress/presentation/providers/progress_providers.dart';
 
-class LessonScreen extends ConsumerStatefulWidget {
-  final LessonModel lesson;
-
-  const LessonScreen({super.key, required this.lesson});
+class PracticePackScreen extends ConsumerStatefulWidget {
+  const PracticePackScreen({super.key});
 
   @override
-  ConsumerState<LessonScreen> createState() => _LessonScreenState();
+  ConsumerState<PracticePackScreen> createState() => _PracticePackScreenState();
 }
 
-class _LessonScreenState extends ConsumerState<LessonScreen> {
-  bool _isLearningVocab = true;
-  int _currentVocabIndex = 0;
-
-  bool _isDoingExercises = false;
+class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   int _currentExerciseIndex = 0;
   final Map<String, String> _userAnswers = {};
   String _currentInputAnswer = '';
@@ -44,34 +36,26 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lessonDetailAsync = ref.watch(
-      lessonDetailDataProvider(widget.lesson.id),
-    );
+    final practicePackAsync = ref.watch(practicePackProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.lesson.title),
+        title: const Text('Luyện Tập Ngẫu Nhiên'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => _showQuitConfirmation(),
         ),
       ),
-      body: lessonDetailAsync.when(
-        data: (detail) {
-          if (_isLearningVocab) {
-            return _buildVocabStep(context, detail.vocabulary);
-          }
-          if (_isDoingExercises) {
-            return _buildExerciseStep(context, detail.exercises);
-          }
+      body: practicePackAsync.when(
+        data: (exercises) {
           if (_isSubmitting) {
             return _buildAnalyzingStep(context);
           }
           if (_showResult && _result != null) {
             return _buildResultStep(context);
           }
-          return const SizedBox.shrink();
+          return _buildExerciseStep(context, exercises);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(
@@ -85,13 +69,12 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Lỗi tải bài học: $err',
+                'Lỗi tải bài luyện tập: $err',
                 style: TextStyle(color: theme.colorScheme.error),
               ),
               const SizedBox(height: 16),
               FilledButton.tonal(
-                onPressed: () =>
-                    ref.invalidate(lessonDetailDataProvider(widget.lesson.id)),
+                onPressed: () => ref.invalidate(practicePackProvider),
                 child: const Text('Thử lại'),
               ),
             ],
@@ -101,164 +84,15 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     );
   }
 
-  // Vocab Step
-  Widget _buildVocabStep(
-    BuildContext context,
-    List<VocabularyModel> vocabulary,
-  ) {
-    final theme = Theme.of(context);
-    if (vocabulary.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Bài học này không có từ vựng.'),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () {
-                setState(() {
-                  _isLearningVocab = false;
-                  _isDoingExercises = true;
-                });
-              },
-              child: const Text('Bắt đầu làm bài tập'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final vocab = vocabulary[_currentVocabIndex];
-
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Step progress indicator
-          Text(
-            'Học Từ Vựng (${_currentVocabIndex + 1}/${vocabulary.length})',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Card(
-              elevation: 4,
-              shadowColor: Colors.black.withValues(alpha: 0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      vocab.word,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    Text(
-                      vocab.pronunciation,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const Divider(height: 40),
-                    Text(
-                      'Ý nghĩa',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vocab.meaning,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Ví dụ',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vocab.exampleSentence,
-                      style: theme.textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              if (_currentVocabIndex > 0)
-                OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentVocabIndex--;
-                    });
-                  },
-                  child: const Text('Trước'),
-                ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () {
-                    if (_currentVocabIndex < vocabulary.length - 1) {
-                      setState(() {
-                        _currentVocabIndex++;
-                      });
-                    } else {
-                      setState(() {
-                        _isLearningVocab = false;
-                        _isDoingExercises = true;
-                      });
-                    }
-                  },
-                  child: Text(
-                    _currentVocabIndex < vocabulary.length - 1
-                        ? 'Từ tiếp theo'
-                        : 'Bắt đầu làm bài tập',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   // Exercise Step
-  Widget _buildExerciseStep(
-    BuildContext context,
-    List<ExerciseModel> exercises,
-  ) {
+  Widget _buildExerciseStep(BuildContext context, List<ExerciseModel> exercises) {
     final theme = Theme.of(context);
     if (exercises.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Bài học này không có bài tập nào.'),
+            const Text('Ngân hàng câu hỏi hiện tại đang trống.'),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -295,7 +129,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Bài tập ${_currentExerciseIndex + 1}/${exercises.length}',
+                'Câu hỏi ${_currentExerciseIndex + 1}/${exercises.length}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -326,18 +160,14 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Display Question/Prompt
+                // Display Question
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.surfaceVariant.withValues(
-                    alpha: 0.3,
-                  ),
+                  color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
-                      color: theme.colorScheme.outlineVariant.withValues(
-                        alpha: 0.5,
-                      ),
+                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                     ),
                   ),
                   child: Padding(
@@ -355,7 +185,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 // Render Input based on type
                 if (exercise.exerciseType == 'multiple_choice')
                   _buildMultipleChoiceInput(theme, exercise.options)
-                else if (exercise.exerciseType == 'matching' && MatchingCodec.decodePairs(exercise.options).length >= 2)
+                else if (exercise.exerciseType == 'matching' &&
+                    MatchingCodec.decodePairs(exercise.options).length >= 2)
                   MatchingExercise(
                     key: ValueKey(exercise.id),
                     options: exercise.options,
@@ -374,16 +205,13 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         ),
 
         // Result check banner
-        if (_isChecked)
-          _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
+        if (_isChecked) _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
 
         // Action button (Check / Continue)
         Padding(
           padding: const EdgeInsets.all(24.0),
           child: FilledButton(
-            onPressed: _isActionEnabled()
-                ? () => _handleActionButton(exercises)
-                : null,
+            onPressed: _isActionEnabled() ? () => _handleActionButton(exercises) : null,
             child: Text(_isChecked ? 'Tiếp tục' : 'Kiểm tra'),
           ),
         ),
@@ -419,16 +247,11 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
 
       _userAnswers[exercise.id] = userAnswer;
 
-      // Simple normalize and match correct answer
-      final isCorrect =
-          userAnswer.toLowerCase().trim() ==
-              exercise.correctAnswer.toLowerCase().trim() ||
+      // Check correctness
+      final isCorrect = userAnswer.toLowerCase().trim() == exercise.correctAnswer.toLowerCase().trim() ||
           (exercise.exerciseType == 'multiple_choice' &&
               exercise.options.any(
-                (o) =>
-                    o.optionText.toLowerCase().trim() ==
-                        userAnswer.toLowerCase().trim() &&
-                    o.isCorrect,
+                (o) => o.optionText.toLowerCase().trim() == userAnswer.toLowerCase().trim() && o.isCorrect,
               ));
 
       setState(() {
@@ -437,14 +260,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       });
 
       if (!isCorrect) {
-        // Keep the exercise feedback responsive. The submit response remains
-        // the source of truth and reconciles the count with the backend.
-        final bool canContinue = await ref
-            .read(heartProvider.notifier)
-            .deductHeartOnError();
+        final bool canContinue = await ref.read(heartProvider.notifier).deductHeartOnError();
         if (!canContinue && mounted) {
-          final OutOfHeartsNoticeAction? action =
-              await showOutOfHeartsNoticeSheet(context);
+          final OutOfHeartsNoticeAction? action = await showOutOfHeartsNoticeSheet(context);
           if (!mounted) {
             return;
           }
@@ -465,31 +283,24 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           _matchingAnswer = null;
         });
       } else {
-        // Submit answers to server
-        _submitLessonAnswers();
+        // Submit practice pack to server
+        _submitPracticeAnswers();
       }
     }
   }
 
-  // Multiple choice option list
-  Widget _buildMultipleChoiceInput(
-    ThemeData theme,
-    List<ExerciseOptionModel> options,
-  ) {
+  // Multiple choice options list
+  Widget _buildMultipleChoiceInput(ThemeData theme, List<ExerciseOptionModel> options) {
     return Column(
       children: options.map((opt) {
         final isSelected = _selectedOptionText == opt.optionText;
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
-                : theme.colorScheme.surface,
+            color: isSelected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4) : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -637,7 +448,6 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 20),
-          // Big Trophy or fail icon
           Icon(
             success ? Icons.emoji_events_rounded : Icons.stars_outlined,
             size: 96,
@@ -645,7 +455,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            success ? 'Bài học Hoàn thành!' : 'Cố gắng lên nhé!',
+            success ? 'Hoàn thành Luyện tập!' : 'Cố gắng lên nhé!',
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -654,8 +464,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           const SizedBox(height: 8),
           Text(
             success
-                ? 'Bạn đã làm rất xuất sắc và vượt qua bài học!'
-                : 'Điểm số chưa đủ 70% để vượt qua bài học này. Hãy thử lại!',
+                ? 'Bạn đã hoàn thành xuất sắc bài luyện tập ngẫu nhiên!'
+                : 'Điểm số chưa đủ 70% để vượt qua bài luyện tập. Hãy rèn luyện thêm nhé!',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -663,7 +473,6 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Scores Card
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -701,16 +510,13 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           ),
           const Spacer(),
 
-          // Continue Button
           FilledButton(
             onPressed: () async {
-              // Reload user details and go back
               await ref.read(currentUserProvider.notifier).loadUser();
               await ref.read(heartProvider.notifier).loadHearts();
               if (!context.mounted) {
                 return;
               }
-
               Navigator.of(context).pop();
             },
             child: const Text('Hoàn thành'),
@@ -748,28 +554,21 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   // Submit action
-  Future<void> _submitLessonAnswers() async {
+  Future<void> _submitPracticeAnswers() async {
     setState(() {
-      _isDoingExercises = false;
       _isSubmitting = true;
     });
 
-    final List<Map<String, dynamic>> answersList = _userAnswers.entries.map((
-      e,
-    ) {
+    final List<Map<String, dynamic>> answersList = _userAnswers.entries.map((e) {
       return <String, dynamic>{'exerciseId': e.key, 'userAnswer': e.value};
     }).toList();
 
     try {
-      final repository = ref.read(lessonsRepositoryProvider);
-      final res = await repository.submitLesson(widget.lesson.id, answersList);
+      final repository = ref.read(practiceRepositoryProvider);
+      final res = await repository.submitPracticePack(answersList);
+
       await ref.read(heartProvider.notifier).loadHearts();
-      ref
-          .read(completedLessonsProvider.notifier)
-          .markAsCompleted(widget.lesson.id);
-      ref.invalidate(progressEntriesProvider);
       ref.invalidate(progressSummaryProvider);
-      await ref.read(completedLessonsProvider.notifier).reloadFromApi();
       await ref.read(currentUserProvider.notifier).loadUser();
       ref.invalidate(allAchievementsDataProvider);
       ref.invalidate(myAchievementsDataProvider);
@@ -784,24 +583,19 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         _showResult = true;
       });
 
-      // Show unlocked achievements dialog if any
       if (res.unlockedAchievements.isNotEmpty) {
         _showUnlockedAchievementsDialog(res.unlockedAchievements);
       }
     } catch (err) {
       setState(() {
         _isSubmitting = false;
-        _isDoingExercises = true; // Rollback to let them retry nộp bài
       });
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi nộp bài làm: $err')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi nộp bài làm: $err')));
       }
     }
   }
 
-  // Popup Mở khóa Huy hiệu mới
   void _showUnlockedAchievementsDialog(List<dynamic> achievements) {
     showDialog<void>(
       context: context,
@@ -858,7 +652,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Thoát bài học?'),
+          title: const Text('Thoát bài luyện tập?'),
           content: const Text('Tiến trình bài tập hiện tại của bạn sẽ bị mất.'),
           actions: <Widget>[
             TextButton(

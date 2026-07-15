@@ -1,7 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../lessons/data/models/exercise_model.dart';
 import '../../../progress/presentation/providers/progress_providers.dart';
+import '../../data/datasources/practice_remote_data_source.dart';
+import '../../data/repositories/practice_repository_impl.dart';
+import '../../domain/repositories/practice_repository.dart';
+
+final Provider<PracticeRemoteDataSource> practiceRemoteDataSourceProvider =
+    Provider<PracticeRemoteDataSource>((Ref ref) {
+  final dio = ref.watch(authDioProvider);
+  return PracticeRemoteDataSourceImpl(dio);
+});
+
+final Provider<PracticeRepository> practiceRepositoryProvider =
+    Provider<PracticeRepository>((Ref ref) {
+  final remoteDataSource = ref.watch(practiceRemoteDataSourceProvider);
+  return PracticeRepositoryImpl(remoteDataSource);
+});
+
+final practicePackProvider =
+    FutureProvider.autoDispose<List<ExerciseModel>>((Ref ref) async {
+  final repository = ref.watch(practiceRepositoryProvider);
+  return repository.getPracticePack();
+});
 
 final FutureProvider<int> completedLessonCountProvider =
     FutureProvider<int>((Ref ref) async {
