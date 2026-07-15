@@ -1,66 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../api/services/user_api_service.dart';
+import '../../auth/presentation/screens/profile_screen.dart';
+import '../../hearts/presentation/widgets/heart_indicator.dart';
+import '../../leaderboard/presentation/screens/leaderboard_screen.dart';
+import '../../lessons/presentation/screens/course_path_screen.dart';
+import '../../practice/presentation/screens/practice_screen.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  final UserApiService _userApiService = UserApiService();
+class _HomePageState extends ConsumerState<HomePage> {
+  int _currentIndex = 0;
 
-  bool _loading = false;
-  String _message = 'Flutter FE is ready. Tap button to test API call.';
-
-  Future<void> _testApi() async {
-    setState(() {
-      _loading = true;
-      _message = 'Calling API...';
-    });
-
-    try {
-      final List<dynamic> users = await _userApiService.getUsers();
-      setState(() {
-        _message = 'API success. Received ${users.length} users.';
-      });
-    } catch (error) {
-      setState(() {
-        _message = 'API error: $error';
-      });
-    } finally {
-      setState(() {
-        _loading = false;
-      });
+  String _getAppBarTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return 'Learn';
+      case 1:
+        return 'Practice';
+      case 2:
+        return 'Leaderboard';
+      case 3:
+        return 'Profile';
+      default:
+        return 'PRM Learning';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PRM Frontend Home'),
+      appBar: _currentIndex == 0
+          ? null
+          : AppBar(
+              title: Text(_getAppBarTitle()),
+              centerTitle: true,
+              actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
+            ),
+      body: Builder(
+        builder: (context) {
+          switch (_currentIndex) {
+            case 0:
+              return const CoursePathScreen();
+            case 1:
+              return const PracticeScreen();
+            case 2:
+              return const LeaderboardScreen();
+            case 3:
+              return const ProfileScreen();
+            default:
+              return const SizedBox.shrink();
+          }
+        },
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                _message,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: _loading ? null : _testApi,
-                child: Text(_loading ? 'Loading...' : 'Test API Route'),
-              ),
-            ],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const <Widget>[
+          NavigationDestination(
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
+            label: 'Learn',
           ),
-        ),
+          NavigationDestination(
+            icon: Icon(Icons.auto_stories_outlined),
+            selectedIcon: Icon(Icons.auto_stories),
+            label: 'Practice',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.leaderboard_outlined),
+            selectedIcon: Icon(Icons.leaderboard),
+            label: 'Leaderboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outlined),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
