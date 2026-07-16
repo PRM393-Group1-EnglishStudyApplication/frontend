@@ -1,6 +1,6 @@
-import '../../../lessons/data/models/exercise_model.dart';
+import '../../../lessons/domain/entities/exercise_entities.dart';
 
 abstract class PracticeRepository {
-  Future<List<ExerciseModel>> getPracticePack();
+  Future<List<Exercise>> getPracticePack();
   Future<LessonSubmissionResult> submitPracticePack(List<Map<String, dynamic>> answers);
 }
