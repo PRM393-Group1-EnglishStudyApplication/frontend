@@ -1,14 +1,11 @@
-class CourseModel {
-  final String id;
-  final String title;
-  final String description;
-  final String targetLevel;
+import '../../domain/entities/course.dart';
 
+class CourseModel extends Course {
   const CourseModel({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.targetLevel,
+    required super.id,
+    required super.title,
+    required super.description,
+    required super.targetLevel,
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {

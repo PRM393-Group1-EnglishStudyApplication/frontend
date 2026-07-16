@@ -1,16 +1,12 @@
-class VocabularyModel {
-  final String id;
-  final String word;
-  final String meaning;
-  final String pronunciation;
-  final String exampleSentence;
+import '../../domain/entities/exercise_entities.dart';
 
+class VocabularyModel extends Vocabulary {
   const VocabularyModel({
-    required this.id,
-    required this.word,
-    required this.meaning,
-    required this.pronunciation,
-    required this.exampleSentence,
+    required super.id,
+    required super.word,
+    required super.meaning,
+    required super.pronunciation,
+    required super.exampleSentence,
   });
 
   factory VocabularyModel.fromJson(Map<String, dynamic> json) {
@@ -24,17 +20,12 @@ class VocabularyModel {
   }
 }
 
-class ExerciseOptionModel {
-  final String id;
-  final String exerciseId;
-  final String optionText;
-  final bool isCorrect;
-
+class ExerciseOptionModel extends ExerciseOption {
   const ExerciseOptionModel({
-    required this.id,
-    required this.exerciseId,
-    required this.optionText,
-    required this.isCorrect,
+    required super.id,
+    required super.exerciseId,
+    required super.optionText,
+    required super.isCorrect,
   });
 
   factory ExerciseOptionModel.fromJson(Map<String, dynamic> json) {
@@ -47,25 +38,16 @@ class ExerciseOptionModel {
   }
 }
 
-class ExerciseModel {
-  final String id;
-  final String lessonId;
-  final String question;
-  final String exerciseType;
-  final String correctAnswer;
-  final String? audioUrl;
-  final String? imageUrl;
-  final List<ExerciseOptionModel> options;
-
+class ExerciseModel extends Exercise {
   const ExerciseModel({
-    required this.id,
-    required this.lessonId,
-    required this.question,
-    required this.exerciseType,
-    required this.correctAnswer,
-    this.audioUrl,
-    this.imageUrl,
-    required this.options,
+    required super.id,
+    required super.lessonId,
+    required super.question,
+    required super.exerciseType,
+    required super.correctAnswer,
+    super.audioUrl,
+    super.imageUrl,
+    required List<ExerciseOptionModel> super.options,
   });
 
   factory ExerciseModel.fromJson(Map<String, dynamic> json) {
@@ -83,23 +65,15 @@ class ExerciseModel {
   }
 }
 
-class LessonDetailModel {
-  final String id;
-  final String unitId;
-  final String title;
-  final int orderIndex;
-  final int xpReward;
-  final List<VocabularyModel> vocabulary;
-  final List<ExerciseModel> exercises;
-
+class LessonDetailModel extends LessonDetail {
   const LessonDetailModel({
-    required this.id,
-    required this.unitId,
-    required this.title,
-    required this.orderIndex,
-    required this.xpReward,
-    required this.vocabulary,
-    required this.exercises,
+    required super.id,
+    required super.unitId,
+    required super.title,
+    required super.orderIndex,
+    required super.xpReward,
+    required List<VocabularyModel> super.vocabulary,
+    required List<ExerciseModel> super.exercises,
   });
 
   factory LessonDetailModel.fromJson(Map<String, dynamic> json) {
@@ -118,25 +92,18 @@ class LessonDetailModel {
   }
 }
 
-class LessonSubmissionResult {
-  final int totalQuestions;
-  final int correctAnswers;
-  final int score;
-  final int earnedXp;
-  final int currentHearts;
-  final List<dynamic> unlockedAchievements;
-
-  const LessonSubmissionResult({
-    required this.totalQuestions,
-    required this.correctAnswers,
-    required this.score,
-    required this.earnedXp,
-    required this.currentHearts,
-    required this.unlockedAchievements,
+class LessonSubmissionResultModel extends LessonSubmissionResult {
+  const LessonSubmissionResultModel({
+    required super.totalQuestions,
+    required super.correctAnswers,
+    required super.score,
+    required super.earnedXp,
+    required super.currentHearts,
+    required super.unlockedAchievements,
   });
 
-  factory LessonSubmissionResult.fromJson(Map<String, dynamic> json) {
-    return LessonSubmissionResult(
+  factory LessonSubmissionResultModel.fromJson(Map<String, dynamic> json) {
+    return LessonSubmissionResultModel(
       totalQuestions: (json['totalQuestions'] as num?)?.toInt() ?? 0,
       correctAnswers: (json['correctAnswers'] as num?)?.toInt() ?? 0,
       score: (json['score'] as num?)?.toInt() ?? 0,
