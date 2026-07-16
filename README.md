@@ -19,6 +19,10 @@ lib/
 		services/
 			user_api_service.dart
 	features/
+		chat/
+			data/
+			domain/
+			presentation/
 		home/
 			presentation/
 				home_page.dart
@@ -46,6 +50,17 @@ lib/
 flutter pub get
 flutter run
 ```
+
+The default API URL is `http://10.0.2.2:3000`, which reaches localhost from an
+Android emulator. Override it for a physical device or deployed backend:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.10:3000
+flutter run --dart-define=API_BASE_URL=https://api.example.com
+```
+
+The chatbot calls `POST /api/chat`. The backend must have `KIMI_API_KEY`
+configured before it can return AI responses.
 
 ## Validate
 

@@ -9,11 +9,10 @@ class ApiClient {
     BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
       connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      sendTimeout: const Duration(seconds: 10),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
+      // AI responses can take longer than regular REST requests.
+      receiveTimeout: const Duration(seconds: 45),
+      sendTimeout: const Duration(seconds: 20),
+      headers: <String, String>{'Content-Type': 'application/json'},
     ),
   );
 }
