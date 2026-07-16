@@ -1,4 +1,4 @@
-import '../../features/lessons/data/models/exercise_model.dart';
+import '../../features/lessons/domain/entities/exercise_entities.dart';
 
 class MatchingPair {
   final String? id;
@@ -26,7 +26,7 @@ class MatchingCodec {
     return MatchingPair(id: id, left: left, right: right);
   }
 
-  static List<MatchingPair> decodePairs(List<ExerciseOptionModel> options) {
+  static List<MatchingPair> decodePairs(List<ExerciseOption> options) {
     final list = <MatchingPair>[];
     for (final opt in options) {
       final pair = decodeOption(opt.optionText, id: opt.id);

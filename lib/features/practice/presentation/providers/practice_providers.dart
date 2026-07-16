@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../lessons/data/models/exercise_model.dart';
+import '../../../lessons/domain/entities/exercise_entities.dart';
 import '../../../progress/presentation/providers/progress_providers.dart';
 import '../../data/datasources/practice_remote_data_source.dart';
 import '../../data/repositories/practice_repository_impl.dart';
@@ -20,7 +20,7 @@ final Provider<PracticeRepository> practiceRepositoryProvider =
 });
 
 final practicePackProvider =
-    FutureProvider.autoDispose<List<ExerciseModel>>((Ref ref) async {
+    FutureProvider.autoDispose<List<Exercise>>((Ref ref) async {
   final repository = ref.watch(practiceRepositoryProvider);
   return repository.getPracticePack();
 });

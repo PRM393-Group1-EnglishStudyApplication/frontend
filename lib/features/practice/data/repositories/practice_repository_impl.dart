@@ -1,4 +1,4 @@
-import '../../../lessons/data/models/exercise_model.dart';
+import '../../../lessons/domain/entities/exercise_entities.dart';
 import '../../domain/repositories/practice_repository.dart';
 import '../datasources/practice_remote_data_source.dart';
 
@@ -8,7 +8,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
   PracticeRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<List<ExerciseModel>> getPracticePack() {
+  Future<List<Exercise>> getPracticePack() {
     return _remoteDataSource.getPracticePack();
   }
 

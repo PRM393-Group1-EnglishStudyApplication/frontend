@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_response.dart';
+import '../../domain/entities/exercise_entities.dart';
 import '../models/course_model.dart';
 import '../models/unit_model.dart';
 import '../models/lesson_model.dart';
@@ -73,9 +74,9 @@ class LessonsRemoteDataSourceImpl implements LessonsRemoteDataSource {
       data: <String, dynamic>{'answers': answers},
     );
     if (response.data == null) throw Exception('Null response body');
-    final apiResponse = ApiResponse<LessonSubmissionResult>.fromJson(
+    final apiResponse = ApiResponse<LessonSubmissionResultModel>.fromJson(
       response.data as Map<String, dynamic>,
-      (json) => LessonSubmissionResult.fromJson(json as Map<String, dynamic>),
+      (json) => LessonSubmissionResultModel.fromJson(json as Map<String, dynamic>),
     );
     if (!apiResponse.success || apiResponse.data == null) throw Exception(apiResponse.message);
     return apiResponse.data!;

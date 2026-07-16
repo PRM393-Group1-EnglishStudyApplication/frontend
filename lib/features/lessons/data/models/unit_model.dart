@@ -1,14 +1,11 @@
-class UnitModel {
-  final String id;
-  final String courseId;
-  final String title;
-  final int orderIndex;
+import '../../domain/entities/unit.dart';
 
+class UnitModel extends Unit {
   const UnitModel({
-    required this.id,
-    required this.courseId,
-    required this.title,
-    required this.orderIndex,
+    required super.id,
+    required super.courseId,
+    required super.title,
+    required super.orderIndex,
   });
 
   factory UnitModel.fromJson(Map<String, dynamic> json) {

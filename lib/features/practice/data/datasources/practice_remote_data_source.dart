@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_response.dart';
+import '../../../lessons/domain/entities/exercise_entities.dart';
 import '../../../lessons/data/models/exercise_model.dart';
 
 abstract class PracticeRemoteDataSource {
@@ -45,9 +46,9 @@ class PracticeRemoteDataSourceImpl implements PracticeRemoteDataSource {
       throw Exception('Empty response body from server.');
     }
 
-    final apiResponse = ApiResponse<LessonSubmissionResult>.fromJson(
+    final apiResponse = ApiResponse<LessonSubmissionResultModel>.fromJson(
       response.data as Map<String, dynamic>,
-      (json) => LessonSubmissionResult.fromJson(json as Map<String, dynamic>),
+      (json) => LessonSubmissionResultModel.fromJson(json as Map<String, dynamic>),
     );
 
     if (!apiResponse.success || apiResponse.data == null) {

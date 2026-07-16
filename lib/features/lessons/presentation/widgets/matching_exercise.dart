@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../data/models/exercise_model.dart';
+import '../../domain/entities/exercise_entities.dart';
 import '../../../../core/utils/matching_codec.dart';
 
 class MatchingExercise extends StatefulWidget {
-  final List<ExerciseOptionModel> options;
+  final List<ExerciseOption> options;
   final bool enabled;
   final ValueChanged<String?> onAnswerChanged;
 

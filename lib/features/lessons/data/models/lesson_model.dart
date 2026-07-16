@@ -1,16 +1,12 @@
-class LessonModel {
-  final String id;
-  final String title;
-  final int orderIndex;
-  final int xpReward;
-  final String unitId;
+import '../../domain/entities/lesson.dart';
 
+class LessonModel extends Lesson {
   const LessonModel({
-    required this.id,
-    required this.title,
-    required this.orderIndex,
-    required this.xpReward,
-    required this.unitId,
+    required super.id,
+    required super.title,
+    required super.orderIndex,
+    required super.xpReward,
+    required super.unitId,
   });
 
   factory LessonModel.fromJson(Map<String, dynamic> json) {
