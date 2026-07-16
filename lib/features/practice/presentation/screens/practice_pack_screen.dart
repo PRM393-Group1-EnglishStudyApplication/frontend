@@ -6,7 +6,7 @@ import 'package:prm_frontend/features/achievements/presentation/providers/achiev
 import 'package:prm_frontend/features/auth/presentation/providers/auth_providers.dart';
 import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
 import 'package:prm_frontend/features/leaderboard/presentation/providers/leaderboard_providers.dart';
-import 'package:prm_frontend/features/lessons/data/models/exercise_model.dart';
+import 'package:prm_frontend/features/lessons/domain/entities/exercise_entities.dart';
 import 'package:prm_frontend/features/lessons/presentation/widgets/matching_exercise.dart';
 import 'package:prm_frontend/features/lessons/presentation/widgets/out_of_hearts_notice_sheet.dart';
 import 'package:prm_frontend/features/practice/presentation/providers/practice_providers.dart';
@@ -85,7 +85,7 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   }
 
   // Exercise Step
-  Widget _buildExerciseStep(BuildContext context, List<ExerciseModel> exercises) {
+  Widget _buildExerciseStep(BuildContext context, List<Exercise> exercises) {
     final theme = Theme.of(context);
     if (exercises.isEmpty) {
       return Center(
@@ -235,7 +235,7 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
     return false;
   }
 
-  Future<void> _handleActionButton(List<ExerciseModel> exercises) async {
+  Future<void> _handleActionButton(List<Exercise> exercises) async {
     final exercise = exercises[_currentExerciseIndex];
     if (!_isChecked) {
       // Perform Check
@@ -290,7 +290,7 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   }
 
   // Multiple choice options list
-  Widget _buildMultipleChoiceInput(ThemeData theme, List<ExerciseOptionModel> options) {
+  Widget _buildMultipleChoiceInput(ThemeData theme, List<ExerciseOption> options) {
     return Column(
       children: options.map((opt) {
         final isSelected = _selectedOptionText == opt.optionText;

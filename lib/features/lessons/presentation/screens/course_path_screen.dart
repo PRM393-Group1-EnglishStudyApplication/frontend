@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../data/models/lesson_model.dart';
-import '../../data/models/unit_model.dart';
+import '../../domain/entities/lesson.dart';
+import '../../domain/entities/unit.dart';
 import '../providers/course_providers.dart';
 import '../providers/lessons_providers.dart';
 import '../widgets/curved_path_painter.dart';
@@ -261,10 +261,8 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
 
           // Read the active unit ID from state provider. If null, default to first unit.
           final activeUnitId = ref.watch(activeUnitProvider) ?? units.first.id;
-          final currentUnit = units.firstWhere(
-            (u) => u.id == activeUnitId,
-            orElse: () => units.first,
-          );
+          final index = units.indexWhere((u) => u.id == activeUnitId);
+          final currentUnit = index != -1 ? units[index] : units.first;
 
           final lessonsAsync = ref.watch(lessonsDataProvider(currentUnit.id));
 
@@ -301,8 +299,8 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
 
   Widget _buildLevelProgressBanner(
     BuildContext context,
-    List<UnitModel> units,
-    UnitModel currentUnit,
+    List<Unit> units,
+    Unit currentUnit,
   ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -379,7 +377,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
                               newUnitId;
                         }
                       },
-                      items: units.map((UnitModel unit) {
+                      items: units.map((Unit unit) {
                         final isUnlocked = ref.watch(
                           isUnitUnlockedProvider(unit),
                         );
@@ -476,7 +474,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
     );
   }
 
-  Widget _buildCurvedPath(BuildContext context, List<LessonModel> lessons) {
+  Widget _buildCurvedPath(BuildContext context, List<Lesson> lessons) {
     final completedSet = ref.watch(completedLessonsProvider);
 
     const double dy = 135.0; // vertical spacing
@@ -559,7 +557,7 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
 
   Widget _buildPathNode(
     BuildContext context,
-    LessonModel lesson,
+    Lesson lesson,
     bool isCompleted,
     bool isActive,
     bool isLocked,

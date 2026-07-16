@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../hearts/presentation/providers/heart_providers.dart';
-import '../../data/models/course_model.dart';
-import '../../data/models/unit_model.dart';
+import '../../domain/entities/course.dart';
+import '../../domain/entities/unit.dart';
 import '../providers/lessons_providers.dart';
 import '../providers/course_providers.dart';
 import 'lesson_screen.dart';
 
 class CourseDetailScreen extends ConsumerWidget {
-  final CourseModel course;
+  final Course course;
 
   const CourseDetailScreen({super.key, required this.course});
 
-  String _getCourseImage(CourseModel course) {
+  String _getCourseImage(Course course) {
     final title = course.title.toLowerCase();
     if (title.contains('giao tiếp') || title.contains('communication') || title.contains('conversation')) {
       return 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop';
@@ -360,7 +360,7 @@ class CourseDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLessonsList(BuildContext context, WidgetRef ref, UnitModel unit) {
+  Widget _buildLessonsList(BuildContext context, WidgetRef ref, Unit unit) {
     final lessonsAsync = ref.watch(lessonsDataProvider(unit.id));
     final colors = Theme.of(context).colorScheme;
     

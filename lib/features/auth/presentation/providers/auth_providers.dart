@@ -6,6 +6,7 @@ import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/get_current_user.dart';
 
 final StateProvider<String?> clerkTokenProvider = StateProvider<String?>((Ref ref) => null);
 
@@ -55,11 +56,16 @@ final Provider<AuthRepository> authRepositoryProvider = Provider<AuthRepository>
   return AuthRepositoryImpl(remoteDataSource);
 });
 
+final Provider<GetCurrentUser> getCurrentUserProvider = Provider<GetCurrentUser>((Ref ref) {
+  final AuthRepository repository = ref.watch(authRepositoryProvider);
+  return GetCurrentUser(repository);
+});
+
 class CurrentUserNotifier extends StateNotifier<AsyncValue<AppUser>> {
-  final AuthRepository _repository;
+  final GetCurrentUser _getCurrentUser;
   final String? _token;
 
-  CurrentUserNotifier(this._repository, this._token) : super(const AsyncValue<AppUser>.loading()) {
+  CurrentUserNotifier(this._getCurrentUser, this._token) : super(const AsyncValue<AppUser>.loading()) {
     if (_token != null) {
       loadUser();
     }
@@ -68,7 +74,7 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<AppUser>> {
   Future<void> loadUser() async {
     state = const AsyncValue<AppUser>.loading();
     try {
-      final AppUser user = await _repository.getCurrentUser();
+      final AppUser user = await _getCurrentUser();
       state = AsyncValue<AppUser>.data(user);
     } catch (error, stackTrace) {
       state = AsyncValue<AppUser>.error(error, stackTrace);
@@ -78,7 +84,7 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<AppUser>> {
 
 final StateNotifierProvider<CurrentUserNotifier, AsyncValue<AppUser>> currentUserProvider =
     StateNotifierProvider<CurrentUserNotifier, AsyncValue<AppUser>>((Ref ref) {
-  final AuthRepository repository = ref.watch(authRepositoryProvider);
+  final GetCurrentUser getCurrentUser = ref.watch(getCurrentUserProvider);
   final String? token = ref.watch(clerkTokenProvider);
-  return CurrentUserNotifier(repository, token);
+  return CurrentUserNotifier(getCurrentUser, token);
 });

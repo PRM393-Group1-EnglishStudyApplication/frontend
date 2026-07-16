@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../lessons/data/models/exercise_model.dart';
+import '../../../lessons/domain/entities/exercise_entities.dart';
 import 'package:prm_frontend/core/utils/matching_codec.dart';
 import '../providers/admin_providers.dart';
 
@@ -32,7 +32,7 @@ class PairDraft {
 class ExerciseEditorScreen extends ConsumerStatefulWidget {
   final String lessonTitle;
   final String lessonId;
-  final ExerciseModel? exercise;
+  final Exercise? exercise;
 
   const ExerciseEditorScreen({
     super.key,

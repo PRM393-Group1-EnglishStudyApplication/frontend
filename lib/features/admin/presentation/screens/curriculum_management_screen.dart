@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../lessons/data/models/course_model.dart';
-import '../../../lessons/data/models/lesson_model.dart';
-import '../../../lessons/data/models/unit_model.dart';
+import '../../../lessons/domain/entities/course.dart';
+import '../../../lessons/domain/entities/lesson.dart';
+import '../../../lessons/domain/entities/unit.dart';
 import '../../../lessons/presentation/providers/lessons_providers.dart';
 import '../providers/admin_providers.dart';
 import 'lesson_exercises_screen.dart';
 
 class UnitWithLessons {
-  final UnitModel unit;
-  final List<LessonModel> lessons;
+  final Unit unit;
+  final List<Lesson> lessons;
   UnitWithLessons({required this.unit, required this.lessons});
 }
 
@@ -489,7 +489,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     );
   }
 
-  void _showEditCourseDialog(BuildContext context, CourseModel course) {
+  void _showEditCourseDialog(BuildContext context, Course course) {
     final titleController = TextEditingController(text: course.title);
     String level = course.targetLevel;
 
@@ -564,7 +564,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     );
   }
 
-  void _showDeleteCourseDialog(BuildContext context, CourseModel course) {
+  void _showDeleteCourseDialog(BuildContext context, Course course) {
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -643,7 +643,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     }
   }
 
-  Future<void> _reorderLessons(List<LessonModel> lessons, int oldIndex, int newIndex, String courseId) async {
+  Future<void> _reorderLessons(List<Lesson> lessons, int oldIndex, int newIndex, String courseId) async {
     if (newIndex > oldIndex) newIndex -= 1;
     setState(() {
       _isSavingOrder = true;
@@ -743,7 +743,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     );
   }
 
-  void _showEditUnitDialog(BuildContext context, UnitModel unit) {
+  void _showEditUnitDialog(BuildContext context, Unit unit) {
     final controller = TextEditingController(text: unit.title);
     showDialog<void>(
       context: context,
@@ -789,7 +789,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     );
   }
 
-  void _showDeleteUnitDialog(BuildContext context, UnitModel unit) {
+  void _showDeleteUnitDialog(BuildContext context, Unit unit) {
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -888,7 +888,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     );
   }
 
-  void _showEditLessonDialog(BuildContext context, LessonModel lesson) {
+  void _showEditLessonDialog(BuildContext context, Lesson lesson) {
     final titleController = TextEditingController(text: lesson.title);
     final xpController = TextEditingController(text: '${lesson.xpReward}');
 
@@ -951,7 +951,7 @@ class _CurriculumManagementScreenState extends ConsumerState<CurriculumManagemen
     );
   }
 
-  void _showDeleteLessonDialog(BuildContext context, LessonModel lesson) {
+  void _showDeleteLessonDialog(BuildContext context, Lesson lesson) {
     showDialog<void>(
       context: context,
       builder: (context) {

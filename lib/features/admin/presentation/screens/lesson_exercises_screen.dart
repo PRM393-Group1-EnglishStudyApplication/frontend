@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../lessons/data/models/exercise_model.dart';
-import '../../../lessons/data/models/lesson_model.dart';
+import '../../../lessons/domain/entities/exercise_entities.dart';
+import '../../../lessons/domain/entities/lesson.dart';
 import '../../../lessons/presentation/providers/lessons_providers.dart';
 import '../providers/admin_providers.dart';
 import 'exercise_editor_screen.dart';
 
 class LessonExercisesScreen extends ConsumerWidget {
   final String unitTitle;
-  final LessonModel lesson;
+  final Lesson lesson;
 
   const LessonExercisesScreen({
     super.key,
@@ -348,7 +348,7 @@ class LessonExercisesScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteExerciseDialog(BuildContext context, WidgetRef ref, ExerciseModel exercise) {
+  void _showDeleteExerciseDialog(BuildContext context, WidgetRef ref, Exercise exercise) {
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -384,7 +384,7 @@ class LessonExercisesScreen extends ConsumerWidget {
 
   // === Vocabulary Actions ===
 
-  void _showAddVocabMenu(BuildContext context, WidgetRef ref, List<VocabularyModel> currentVocabs) {
+  void _showAddVocabMenu(BuildContext context, WidgetRef ref, List<Vocabulary> currentVocabs) {
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -482,7 +482,7 @@ class LessonExercisesScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditVocabDialog(BuildContext context, WidgetRef ref, VocabularyModel vocab) {
+  void _showEditVocabDialog(BuildContext context, WidgetRef ref, Vocabulary vocab) {
     final wordController = TextEditingController(text: vocab.word);
     final meaningController = TextEditingController(text: vocab.meaning);
     final pronController = TextEditingController(text: vocab.pronunciation);
@@ -542,7 +542,7 @@ class LessonExercisesScreen extends ConsumerWidget {
     );
   }
 
-  void _showDetachVocabDialog(BuildContext context, WidgetRef ref, VocabularyModel vocab) {
+  void _showDetachVocabDialog(BuildContext context, WidgetRef ref, Vocabulary vocab) {
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -576,7 +576,7 @@ class LessonExercisesScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteVocabDialog(BuildContext context, WidgetRef ref, VocabularyModel vocab) {
+  void _showDeleteVocabDialog(BuildContext context, WidgetRef ref, Vocabulary vocab) {
     showDialog<void>(
       context: context,
       builder: (context) {
@@ -609,7 +609,7 @@ class LessonExercisesScreen extends ConsumerWidget {
   }
 
   void _showAttachExistingVocabDialog(
-      BuildContext context, WidgetRef ref, List<VocabularyModel> currentVocabs) {
+      BuildContext context, WidgetRef ref, List<Vocabulary> currentVocabs) {
     final globalVocabAsync = ref.watch(globalVocabularyProvider);
 
     showDialog<void>(
