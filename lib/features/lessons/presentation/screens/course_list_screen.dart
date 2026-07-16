@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/course_model.dart';
+import '../../domain/entities/course.dart';
 import '../providers/lessons_providers.dart';
 import 'course_detail_screen.dart';
 
@@ -32,7 +32,7 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
     'Grammar',
   ];
 
-  String _getCourseImage(CourseModel course, int index) {
+  String _getCourseImage(Course course, int index) {
     final title = course.title.toLowerCase();
     if (title.contains('giao tiếp') ||
         title.contains('communication') ||
@@ -318,7 +318,7 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
     );
   }
 
-  Widget _buildCourseCard(BuildContext context, CourseModel course, int index) {
+  Widget _buildCourseCard(BuildContext context, Course course, int index) {
     final colors = Theme.of(context).colorScheme;
     final isIntermediate = course.targetLevel.toLowerCase() == 'intermediate';
     final isAdvanced = course.targetLevel.toLowerCase() == 'advanced';

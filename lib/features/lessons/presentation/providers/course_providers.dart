@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../progress/presentation/providers/progress_providers.dart';
-import '../../data/models/course_model.dart';
-import '../../data/models/unit_model.dart';
-import '../../data/models/lesson_model.dart';
+import '../../domain/entities/course.dart';
+import '../../domain/entities/unit.dart';
+import '../../domain/entities/lesson.dart';
 import 'lessons_providers.dart';
 
-class ActiveCourseNotifier extends StateNotifier<CourseModel?> {
+class ActiveCourseNotifier extends StateNotifier<Course?> {
   final Ref _ref;
 
   ActiveCourseNotifier(this._ref) : super(null) {
@@ -21,11 +21,8 @@ class ActiveCourseNotifier extends StateNotifier<CourseModel?> {
       final courses = await _ref.read(coursesDataProvider.future);
       if (courses.isNotEmpty) {
         if (savedCourseId != null) {
-          final matched = courses.firstWhere(
-            (c) => c.id == savedCourseId,
-            orElse: () => courses.first,
-          );
-          state = matched;
+          final index = courses.indexWhere((c) => c.id == savedCourseId);
+          state = index != -1 ? courses[index] : courses.first;
         } else {
           state = courses.first;
         }
@@ -41,7 +38,7 @@ class ActiveCourseNotifier extends StateNotifier<CourseModel?> {
     }
   }
 
-  Future<void> setActiveCourse(CourseModel course) async {
+  Future<void> setActiveCourse(Course course) async {
     state = course;
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -52,7 +49,7 @@ class ActiveCourseNotifier extends StateNotifier<CourseModel?> {
   }
 }
 
-final activeCourseProvider = StateNotifierProvider<ActiveCourseNotifier, CourseModel?>((ref) {
+final activeCourseProvider = StateNotifierProvider<ActiveCourseNotifier, Course?>((ref) {
   return ActiveCourseNotifier(ref);
 });
 
@@ -88,11 +85,11 @@ final StateNotifierProvider<CompletedLessonsNotifier, Set<String>> completedLess
   return CompletedLessonsNotifier(ref);
 });
 
-final isUnitUnlockedProvider = Provider.family<bool, UnitModel>((ref, unit) {
+final isUnitUnlockedProvider = Provider.family<bool, Unit>((ref, unit) {
   final unitsAsync = ref.watch(unitsDataProvider(unit.courseId));
   return unitsAsync.maybeWhen(
     data: (units) {
-      final sortedUnits = List<UnitModel>.from(units)..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+      final sortedUnits = List<Unit>.from(units)..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
       final index = sortedUnits.indexWhere((u) => u.id == unit.id);
       if (index <= 0) return true; // first unit is always unlocked
 
@@ -115,7 +112,7 @@ final isUnitUnlockedProvider = Provider.family<bool, UnitModel>((ref, unit) {
   );
 });
 
-final isLessonUnlockedProvider = Provider.family<bool, LessonModel>((ref, lesson) {
+final isLessonUnlockedProvider = Provider.family<bool, Lesson>((ref, lesson) {
   final activeCourse = ref.watch(activeCourseProvider);
   if (activeCourse == null) return false;
 
@@ -132,7 +129,7 @@ final isLessonUnlockedProvider = Provider.family<bool, LessonModel>((ref, lesson
       final lessonsAsync = ref.watch(lessonsDataProvider(unit.id));
       return lessonsAsync.maybeWhen(
         data: (lessons) {
-          final sortedLessons = List<LessonModel>.from(lessons)..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+          final sortedLessons = List<Lesson>.from(lessons)..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
           final completedSet = ref.watch(completedLessonsProvider);
           if (completedSet.contains(lesson.id)) return true;
 

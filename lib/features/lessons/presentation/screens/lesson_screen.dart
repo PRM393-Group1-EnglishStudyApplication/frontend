@@ -6,8 +6,8 @@ import '../../../../features/achievements/presentation/providers/achievements_pr
 import '../../../../features/hearts/presentation/providers/heart_providers.dart';
 import '../../../../features/leaderboard/presentation/providers/leaderboard_providers.dart';
 import '../../../../features/progress/presentation/providers/progress_providers.dart';
-import '../../data/models/exercise_model.dart';
-import '../../data/models/lesson_model.dart';
+import '../../domain/entities/lesson.dart';
+import '../../domain/entities/exercise_entities.dart';
 import '../widgets/out_of_hearts_notice_sheet.dart';
 import '../widgets/matching_exercise.dart';
 import 'package:prm_frontend/core/utils/matching_codec.dart';
@@ -15,7 +15,7 @@ import '../providers/lessons_providers.dart';
 import '../providers/course_providers.dart';
 
 class LessonScreen extends ConsumerStatefulWidget {
-  final LessonModel lesson;
+  final Lesson lesson;
 
   const LessonScreen({super.key, required this.lesson});
 
@@ -104,7 +104,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   // Vocab Step
   Widget _buildVocabStep(
     BuildContext context,
-    List<VocabularyModel> vocabulary,
+    List<Vocabulary> vocabulary,
   ) {
     final theme = Theme.of(context);
     if (vocabulary.isEmpty) {
@@ -250,7 +250,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   // Exercise Step
   Widget _buildExerciseStep(
     BuildContext context,
-    List<ExerciseModel> exercises,
+    List<Exercise> exercises,
   ) {
     final theme = Theme.of(context);
     if (exercises.isEmpty) {
@@ -407,7 +407,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     return false;
   }
 
-  Future<void> _handleActionButton(List<ExerciseModel> exercises) async {
+  Future<void> _handleActionButton(List<Exercise> exercises) async {
     final exercise = exercises[_currentExerciseIndex];
     if (!_isChecked) {
       // Perform Check
@@ -474,7 +474,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   // Multiple choice option list
   Widget _buildMultipleChoiceInput(
     ThemeData theme,
-    List<ExerciseOptionModel> options,
+    List<ExerciseOption> options,
   ) {
     return Column(
       children: options.map((opt) {
@@ -761,8 +761,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     }).toList();
 
     try {
-      final repository = ref.read(lessonsRepositoryProvider);
-      final res = await repository.submitLesson(widget.lesson.id, answersList);
+      final submitLesson = ref.read(submitLessonProvider);
+      final res = await submitLesson(widget.lesson.id, answersList);
       await ref.read(heartProvider.notifier).loadHearts();
       ref
           .read(completedLessonsProvider.notifier)

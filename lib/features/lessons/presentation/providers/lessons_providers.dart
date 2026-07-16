@@ -2,11 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/lessons_remote_data_source.dart';
 import '../../data/repositories/lessons_repository_impl.dart';
+import '../../domain/entities/course.dart';
+import '../../domain/entities/unit.dart';
+import '../../domain/entities/lesson.dart';
+import '../../domain/entities/exercise_entities.dart';
 import '../../domain/repositories/lessons_repository.dart';
-import '../../data/models/course_model.dart';
-import '../../data/models/unit_model.dart';
-import '../../data/models/lesson_model.dart';
-import '../../data/models/exercise_model.dart';
+import '../../domain/usecases/submit_lesson.dart';
 
 final Provider<LessonsRemoteDataSource> lessonsRemoteDataSourceProvider =
     Provider<LessonsRemoteDataSource>((Ref ref) {
@@ -20,27 +21,32 @@ final Provider<LessonsRepository> lessonsRepositoryProvider =
   return LessonsRepositoryImpl(remoteDataSource);
 });
 
-final FutureProvider<List<CourseModel>> coursesDataProvider =
-    FutureProvider<List<CourseModel>>((Ref ref) async {
+final Provider<SubmitLesson> submitLessonProvider = Provider<SubmitLesson>((Ref ref) {
+  final repository = ref.watch(lessonsRepositoryProvider);
+  return SubmitLesson(repository);
+});
+
+final FutureProvider<List<Course>> coursesDataProvider =
+    FutureProvider<List<Course>>((Ref ref) async {
   final repository = ref.watch(lessonsRepositoryProvider);
   return repository.getCourses();
 });
 
-final FutureProviderFamily<List<UnitModel>, String> unitsDataProvider =
-    FutureProvider.family<List<UnitModel>, String>((Ref ref, String courseId) async {
+final FutureProviderFamily<List<Unit>, String> unitsDataProvider =
+    FutureProvider.family<List<Unit>, String>((Ref ref, String courseId) async {
   final repository = ref.watch(lessonsRepositoryProvider);
   return repository.getUnits(courseId);
 });
 
-final FutureProviderFamily<List<LessonModel>, String> lessonsDataProvider =
-    FutureProvider.family<List<LessonModel>, String>((Ref ref, String unitId) async {
+final FutureProviderFamily<List<Lesson>, String> lessonsDataProvider =
+    FutureProvider.family<List<Lesson>, String>((Ref ref, String unitId) async {
   final repository = ref.watch(lessonsRepositoryProvider);
   return repository.getLessons(unitId);
 });
 
 // autoDispose de moi lan mo bai hoc lay mot bo cau hoi ngau nhien moi tu server.
-final AutoDisposeFutureProviderFamily<LessonDetailModel, String> lessonDetailDataProvider =
-    FutureProvider.autoDispose.family<LessonDetailModel, String>((Ref ref, String lessonId) async {
+final AutoDisposeFutureProviderFamily<LessonDetail, String> lessonDetailDataProvider =
+    FutureProvider.autoDispose.family<LessonDetail, String>((Ref ref, String lessonId) async {
   final repository = ref.watch(lessonsRepositoryProvider);
   return repository.getLessonDetail(lessonId);
 });
