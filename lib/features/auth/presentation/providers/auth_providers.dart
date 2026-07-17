@@ -85,6 +85,8 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<AppUser>> {
 final StateNotifierProvider<CurrentUserNotifier, AsyncValue<AppUser>> currentUserProvider =
     StateNotifierProvider<CurrentUserNotifier, AsyncValue<AppUser>>((Ref ref) {
   final GetCurrentUser getCurrentUser = ref.watch(getCurrentUserProvider);
-  final String? token = ref.watch(clerkTokenProvider);
-  return CurrentUserNotifier(getCurrentUser, token);
+  // Clerk rotates the JWT every ~60s; only rebuild (and refetch /api/auth/me)
+  // when the user actually signs in or out. Dio reads the fresh token per request.
+  final bool isSignedIn = ref.watch(clerkTokenProvider.select((String? t) => t != null));
+  return CurrentUserNotifier(getCurrentUser, isSignedIn ? ref.read(clerkTokenProvider) : null);
 });
