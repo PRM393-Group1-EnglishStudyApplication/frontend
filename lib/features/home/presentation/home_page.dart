@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/screens/profile_screen.dart';
+import '../../chat/presentation/providers/chat_providers.dart';
+import '../../chat/presentation/screens/chat_screen.dart';
 import '../../hearts/presentation/widgets/heart_indicator.dart';
 import '../../leaderboard/presentation/screens/leaderboard_screen.dart';
 import '../../lessons/presentation/screens/course_path_screen.dart';
@@ -15,6 +17,8 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  static const int _chatIndex = 3;
+
   int _currentIndex = 0;
 
   String _getAppBarTitle() {
@@ -26,6 +30,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       case 2:
         return 'Leaderboard';
       case 3:
+        return 'Lingua';
+      case 4:
         return 'Profile';
       default:
         return 'PRM Learning';
@@ -40,7 +46,16 @@ class _HomePageState extends ConsumerState<HomePage> {
           : AppBar(
               title: Text(_getAppBarTitle()),
               centerTitle: true,
-              actions: const <Widget>[HeartIndicator(), SizedBox(width: 8)],
+              actions: <Widget>[
+                if (_currentIndex == _chatIndex)
+                  IconButton(
+                    tooltip: 'Cuộc trò chuyện mới',
+                    icon: const Icon(Icons.add_comment_outlined),
+                    onPressed: () => ref.read(chatProvider.notifier).reset(),
+                  ),
+                const HeartIndicator(),
+                const SizedBox(width: 8),
+              ],
             ),
       body: Builder(
         builder: (context) {
@@ -52,6 +67,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             case 2:
               return const LeaderboardScreen();
             case 3:
+              return const ChatScreen();
+            case 4:
               return const ProfileScreen();
             default:
               return const SizedBox.shrink();
@@ -80,6 +97,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             icon: Icon(Icons.leaderboard_outlined),
             selectedIcon: Icon(Icons.leaderboard),
             label: 'Leaderboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome),
+            label: 'Lingua',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outlined),
