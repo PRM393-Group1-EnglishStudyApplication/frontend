@@ -442,6 +442,67 @@ class AdminService {
       throw Exception(apiResponse.message);
     }
   }
+
+  Future<ImportReportModel> importExercises({
+    required String lessonId,
+    required List<int> fileBytes,
+    required String fileName,
+    required bool dryRun,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          fileBytes,
+          filename: fileName,
+        ),
+      });
+
+      final response = await _dio.post<dynamic>(
+        '/api/lessons/$lessonId/exercises/import',
+        queryParameters: {'dryRun': dryRun.toString()},
+        data: formData,
+      );
+
+      final apiResponse = ApiResponse<dynamic>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => json,
+      );
+
+      if (!apiResponse.success || apiResponse.data == null) {
+        throw Exception(apiResponse.message);
+      }
+
+      return ImportReportModel.fromJson(apiResponse.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.containsKey('success') && data['success'] == false) {
+          if (data.containsKey('details')) {
+            return ImportReportModel.fromJson({
+              'dryRun': dryRun,
+              'errors': data['details'],
+              'warnings': <dynamic>[],
+              'preview': <dynamic>[],
+              'totalRows': 0,
+              'validRows': 0,
+              'inserted': 0,
+            });
+          } else {
+            throw Exception(data['message'] ?? 'Import thất bại');
+          }
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<int>> downloadImportTemplate() async {
+    final response = await _dio.get<List<int>>(
+      '/api/exercises/import/template.csv',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return response.data ?? [];
+  }
 }
 
 final Provider<AdminService> adminServiceProvider = Provider<AdminService>((Ref ref) {
