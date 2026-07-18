@@ -378,6 +378,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    // Flashcards entry card them phia tren day so voi "Practice insights" xuong duoi man hinh ban dau
+    await tester.scrollUntilVisible(
+      find.text('Practice insights'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Practice insights'), findsOneWidget);
     expect(find.text('Streak'), findsOneWidget);
     expect(find.text('Bai hoan thanh'), findsOneWidget);
