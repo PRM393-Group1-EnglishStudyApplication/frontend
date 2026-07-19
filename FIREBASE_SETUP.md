@@ -1,10 +1,25 @@
 # Cấu hình Firebase cho thông báo nhắc streak
 
-Code của Requirement 6 đã xong ở cả backend và app, nhưng **push chưa gửi được cho đến khi
-nhóm có Firebase project**. Tài liệu này là phần việc phải làm tay một lần.
+> **Trạng thái: bước 1–3 đã xong.** Firebase project của nhóm là
+> **`prm393-english-g1-f4f22`**, `android/app/google-services.json` và
+> `lib/firebase_options.dart` đã có trong repo. Kéo code về là build được ngay,
+> **không cần chạy lại `flutterfire configure`**.
+>
+> Việc còn lại: **bước 4** (service account key cho backend) — mỗi người tự làm trên
+> máy mình vì key không được commit.
 
 App Flutter và backend **bắt buộc dùng chung một Firebase project** — khác project thì token
 đăng ký một nơi, server gửi một nơi, thông báo không bao giờ tới.
+
+## Lưu ý khi tạo project (nếu sau này phải tạo lại)
+
+- **Không dùng tài khoản `@fpt.edu.vn`.** Project sẽ bị tạo dưới organization của trường.
+- `firebase projects:create` thường **thất bại ở bước `addFirebase` với lỗi 403** nếu tài khoản
+  Google chưa từng chấp nhận Điều khoản dịch vụ Firebase. Cách chắc ăn: tạo project bằng tay
+  trên [Firebase Console](https://console.firebase.google.com/) trước, rồi mới chạy
+  `flutterfire configure --project=<id>`.
+- Console hay tự thêm hậu tố vào project id (`prm393-english-g1` → `prm393-english-g1-f4f22`).
+  Luôn lấy id thật bằng `firebase projects:list`.
 
 ---
 
@@ -76,8 +91,10 @@ flutter build apk --debug
 
 ## 4. Cấp credential cho backend
 
-Firebase Console → ⚙️ **Project settings** → tab **Service accounts** →
-**Generate new private key** → tải file JSON về.
+[Firebase Console → Project settings → Service accounts][sa] → **Generate new private key**
+→ tải file JSON về.
+
+[sa]: https://console.firebase.google.com/project/prm393-english-g1-f4f22/settings/serviceaccounts/adminsdk
 
 **Không commit file này.** Đây là khoá riêng, ai có nó thì gửi push được dưới danh nghĩa project.
 
