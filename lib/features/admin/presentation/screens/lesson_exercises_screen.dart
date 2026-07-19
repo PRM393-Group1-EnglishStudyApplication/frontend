@@ -6,6 +6,7 @@ import '../../../lessons/domain/entities/lesson.dart';
 import '../../../lessons/presentation/providers/lessons_providers.dart';
 import '../providers/admin_providers.dart';
 import 'exercise_editor_screen.dart';
+import 'exercise_import_screen.dart';
 
 class LessonExercisesScreen extends ConsumerWidget {
   final String unitTitle;
@@ -72,10 +73,21 @@ class LessonExercisesScreen extends ConsumerWidget {
                     style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () => _navigateToAddExercise(context),
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Thêm câu hỏi'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: () => _navigateToAddExercise(context),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Thêm câu hỏi'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => _navigateToImport(context),
+                        icon: const Icon(Icons.upload_file_rounded),
+                        label: const Text('Import từ file'),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -219,9 +231,23 @@ class LessonExercisesScreen extends ConsumerWidget {
           child: Text('Lỗi khi tải câu hỏi: $err', style: TextStyle(color: theme.colorScheme.error)),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddExercise(context),
-        child: const Icon(Icons.add_rounded),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'import_exercises',
+            onPressed: () => _navigateToImport(context),
+            tooltip: 'Import câu hỏi',
+            child: const Icon(Icons.upload_file_rounded),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: 'add_exercise',
+            onPressed: () => _navigateToAddExercise(context),
+            tooltip: 'Thêm câu hỏi',
+            child: const Icon(Icons.add_rounded),
+          ),
+        ],
       ),
     );
   }
@@ -343,6 +369,18 @@ class LessonExercisesScreen extends ConsumerWidget {
           lessonTitle: lesson.title,
           lessonId: lesson.id,
           exercise: null,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToImport(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => ExerciseImportScreen(
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
         ),
       ),
     );
