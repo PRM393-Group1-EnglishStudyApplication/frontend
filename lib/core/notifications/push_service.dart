@@ -67,7 +67,10 @@ class PushService {
       // Không truyền options: Firebase đọc cấu hình native (android/app/google-services.json,
       // ios/Runner/GoogleService-Info.plist). Chưa chạy `flutterfire configure` thì lệnh này
       // ném lỗi và app rơi về chế độ không có push thay vì crash (NFR-3).
-      await Firebase.initializeApp();
+      //
+      // Có timeout vì hàm này chạy trước runApp: cấu hình sai hoặc platform channel
+      // treo thì người dùng phải ngồi nhìn màn hình trắng. Thà mất push còn hơn mất app.
+      await Firebase.initializeApp().timeout(const Duration(seconds: 8));
       await _setupLocalNotifications();
 
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
