@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../hearts/presentation/providers/heart_providers.dart';
+import '../../../multiplayer/presentation/screens/multiplayer_lobby_screen.dart';
 import '../providers/practice_providers.dart';
 import 'practice_pack_screen.dart';
 
@@ -175,6 +176,90 @@ class PracticeScreen extends ConsumerWidget {
                   ),
                 );
               },
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shadowColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.secondaryContainer.withValues(alpha: 0.6),
+                      theme.colorScheme.surface,
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.groups_rounded,
+                            color: theme.colorScheme.secondary,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Thách Đấu 1v1',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Đấu quiz thời gian thực cùng bạn bè hoặc người học khác.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.secondary,
+                        foregroundColor: theme.colorScheme.onSecondary,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const MultiplayerLobbyScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.flash_on_rounded),
+                      label: const Text('Bắt đầu đấu 1v1'),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 28),
             Text(
