@@ -113,3 +113,58 @@ class LessonSubmissionResultModel extends LessonSubmissionResult {
     );
   }
 }
+
+class ImportIssue {
+  final int? row;
+  final String? field;
+  final String message;
+
+  const ImportIssue({
+    this.row,
+    this.field,
+    required this.message,
+  });
+
+  factory ImportIssue.fromJson(Map<String, dynamic> json) {
+    return ImportIssue(
+      row: json['row'] as int?,
+      field: json['field'] as String?,
+      message: json['message'] as String? ?? '',
+    );
+  }
+}
+
+class ImportReportModel {
+  final bool dryRun;
+  final int totalRows;
+  final int validRows;
+  final int inserted;
+  final List<ImportIssue> errors;
+  final List<ImportIssue> warnings;
+  final List<dynamic> preview;
+
+  const ImportReportModel({
+    required this.dryRun,
+    required this.totalRows,
+    required this.validRows,
+    required this.inserted,
+    required this.errors,
+    required this.warnings,
+    required this.preview,
+  });
+
+  factory ImportReportModel.fromJson(Map<String, dynamic> json) {
+    final errs = json['errors'] as List<dynamic>? ?? [];
+    final warns = json['warnings'] as List<dynamic>? ?? [];
+    final prevs = json['preview'] as List<dynamic>? ?? [];
+    return ImportReportModel(
+      dryRun: json['dryRun'] as bool? ?? false,
+      totalRows: (json['totalRows'] as num?)?.toInt() ?? 0,
+      validRows: (json['validRows'] as num?)?.toInt() ?? 0,
+      inserted: (json['inserted'] as num?)?.toInt() ?? 0,
+      errors: errs.map((e) => ImportIssue.fromJson(e as Map<String, dynamic>)).toList(),
+      warnings: warns.map((w) => ImportIssue.fromJson(w as Map<String, dynamic>)).toList(),
+      preview: prevs,
+    );
+  }
+}
