@@ -46,6 +46,15 @@ dependencies:
   flutter_dotenv: ^6.0.1
   socket_io_client: ^3.1.6
 
+  # Push notification nhac hoc giu streak (Requirement 6).
+  # firebase_messaging khong tu hien banner khi app dang mo -> can
+  # flutter_local_notifications de hien thu cong o trang thai foreground.
+  firebase_core: ^4.1.1
+  firebase_messaging: ^16.0.2
+  flutter_local_notifications: ^19.4.2
+  # Mo thang trang Cai dat cua app khi user da tu choi quyen thong bao.
+  app_settings: ^6.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
