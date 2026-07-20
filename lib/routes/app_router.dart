@@ -4,6 +4,7 @@ import '../features/auth/presentation/widgets/auth_gate.dart';
 import '../features/courses/presentation/course_list_page.dart';
 import '../features/courses/presentation/course_detail_page.dart';
 import '../features/home/presentation/home_page.dart';
+import '../features/intro/presentation/screens/intro_screen.dart';
 import '../features/units/presentation/unit_list_page.dart';
 import '../features/lessons/presentation/lesson_list_page.dart';
 import '../features/vocabulary/presentation/vocabulary_card_page.dart';
@@ -11,8 +12,12 @@ import 'app_routes.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.home,
+    initialLocation: AppRoutes.intro,
     routes: <RouteBase>[
+      GoRoute(
+        path: AppRoutes.intro,
+        builder: (context, state) => const IntroScreen(),
+      ),
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const AuthGate(
