@@ -6,6 +6,7 @@ import '../../../achievements/presentation/providers/achievements_providers.dart
 import '../../../achievements/presentation/screens/achievements_screen.dart';
 import '../../../admin/presentation/screens/admin_main_screen.dart';
 import '../../../leaderboard/presentation/providers/leaderboard_providers.dart';
+import '../../../notifications/presentation/screens/reminder_settings_screen.dart';
 import '../../../progress/presentation/providers/progress_providers.dart';
 import '../../../progress/presentation/screens/progress_screen.dart';
 import '../providers/auth_providers.dart';
@@ -158,6 +159,28 @@ class ProfileScreen extends ConsumerWidget {
                         context,
                         MaterialPageRoute<void>(
                           builder: (context) => const ProgressScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.notifications_active_rounded),
+                    title: const Text('Nhắc nhở học tập'),
+                    subtitle: const Text('Đặt giờ nhắc hằng ngày để giữ streak'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (context) => const ReminderSettingsScreen(),
                         ),
                       );
                     },

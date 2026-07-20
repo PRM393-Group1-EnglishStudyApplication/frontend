@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "730428150626",
+    "project_id": "prm393-english-g1-f4f22",
+    "storage_bucket": "prm393-english-g1-f4f22.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730428150626:android:68302b10ad03612395523b",
+        "android_client_info": {
+          "package_name": "com.prm.project.prm_frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDIdBHlVLNQ_upBLjwqCb306fyMQMvFVg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

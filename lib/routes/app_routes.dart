@@ -1,4 +1,5 @@
 class AppRoutes {
+  static const String intro = '/intro';
   static const String home = '/';
   static const String courseList = '/courses';
   static const String courseDetail = '/courses/:courseId';
