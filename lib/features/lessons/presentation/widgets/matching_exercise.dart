@@ -105,53 +105,54 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Column
-        Expanded(
-          child: Column(
-            children: leftItems.map((item) {
-              final isMatched = matchedLefts.contains(item);
-              final isSelected = selectedLeft == item;
-              final isWrong = hasError && isSelected;
+    return Column(
+      children: List<Widget>.generate(leftItems.length, (index) {
+        final left = leftItems[index];
+        final right = rightItems[index];
+        final leftSelected = selectedLeft == left;
+        final rightSelected = selectedRight == right;
 
-              return _buildTile(
-                text: item,
-                theme: theme,
-                isMatched: isMatched,
-                isSelected: isSelected,
-                isWrong: isWrong,
-                onTap: () => _selectLeft(item),
-              );
-            }).toList(),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index == leftItems.length - 1 ? 0 : 12,
           ),
-        ),
-        const SizedBox(width: 16),
-        // Right Column
-        Expanded(
-          child: Column(
-            children: rightItems.map((item) {
-              final isMatched = matchedRights.contains(item);
-              final isSelected = selectedRight == item;
-              final isWrong = hasError && isSelected;
-
-              return _buildTile(
-                text: item,
-                theme: theme,
-                isMatched: isMatched,
-                isSelected: isSelected,
-                isWrong: isWrong,
-                onTap: () => _selectRight(item),
-              );
-            }).toList(),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildTile(
+                    key: ValueKey('matching-left-$index'),
+                    text: left,
+                    theme: theme,
+                    isMatched: matchedLefts.contains(left),
+                    isSelected: leftSelected,
+                    isWrong: hasError && leftSelected,
+                    onTap: () => _selectLeft(left),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildTile(
+                    key: ValueKey('matching-right-$index'),
+                    text: right,
+                    theme: theme,
+                    isMatched: matchedRights.contains(right),
+                    isSelected: rightSelected,
+                    isWrong: hasError && rightSelected,
+                    onTap: () => _selectRight(right),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        );
+      }),
     );
   }
 
   Widget _buildTile({
+    required Key key,
     required String text,
     required ThemeData theme,
     required bool isMatched,
@@ -175,22 +176,22 @@ class _MatchingExerciseState extends State<MatchingExercise> {
       borderWidth = 1.5;
       textColor = Colors.red.shade700;
     } else if (isSelected) {
-      backgroundColor = theme.colorScheme.primaryContainer.withValues(alpha: 0.4);
+      backgroundColor = theme.colorScheme.primaryContainer.withValues(
+        alpha: 0.4,
+      );
       borderColor = theme.colorScheme.primary;
       borderWidth = 1.5;
       textColor = theme.colorScheme.primary;
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      key: key,
       width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 60),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: borderColor,
-          width: borderWidth,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
       child: InkWell(
         onTap: widget.enabled && !isMatched && !isChecking ? onTap : null,
@@ -201,7 +202,9 @@ class _MatchingExerciseState extends State<MatchingExercise> {
             text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontWeight: isSelected || isMatched ? FontWeight.bold : FontWeight.w500,
+              fontWeight: isSelected || isMatched
+                  ? FontWeight.bold
+                  : FontWeight.w500,
               color: textColor,
             ),
           ),

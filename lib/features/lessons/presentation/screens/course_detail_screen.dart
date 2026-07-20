@@ -30,7 +30,7 @@ class CourseDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unitsAsync = ref.watch(unitsDataProvider(course.id));
-    final activeCourse = ref.watch(activeCourseProvider);
+    final activeCourse = ref.watch(activeCourseProvider).asData?.value;
     final isActive = activeCourse?.id == course.id;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;

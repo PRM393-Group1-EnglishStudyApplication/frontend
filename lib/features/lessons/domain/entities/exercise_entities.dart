@@ -4,6 +4,7 @@ class Vocabulary {
   final String meaning;
   final String pronunciation;
   final String exampleSentence;
+  final String? imageUrl;
 
   const Vocabulary({
     required this.id,
@@ -11,6 +12,7 @@ class Vocabulary {
     required this.meaning,
     required this.pronunciation,
     required this.exampleSentence,
+    this.imageUrl,
   });
 }
 
@@ -34,6 +36,7 @@ class Exercise {
   final String question;
   final String exerciseType;
   final String correctAnswer;
+  final String? lastUserAnswer;
   final String? audioUrl;
   final String? imageUrl;
   final List<ExerciseOption> options;
@@ -44,6 +47,7 @@ class Exercise {
     required this.question,
     required this.exerciseType,
     required this.correctAnswer,
+    this.lastUserAnswer,
     this.audioUrl,
     this.imageUrl,
     required this.options,
@@ -85,5 +89,26 @@ class LessonSubmissionResult {
     required this.earnedXp,
     required this.currentHearts,
     required this.unlockedAchievements,
+  });
+}
+
+class WrongAnswerPack {
+  final List<Exercise> items;
+  final int total;
+
+  const WrongAnswerPack({required this.items, required this.total});
+}
+
+class WrongAnswerReviewResult {
+  final int totalQuestions;
+  final int correctAnswers;
+  final int score;
+  final int remainingWrongAnswers;
+
+  const WrongAnswerReviewResult({
+    required this.totalQuestions,
+    required this.correctAnswers,
+    required this.score,
+    required this.remainingWrongAnswers,
   });
 }

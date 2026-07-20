@@ -11,10 +11,12 @@ final _vocabularyServiceProvider = Provider<VocabularyService>((ref) {
   return VocabularyService(ref.watch(authDioProvider));
 });
 
-final _vocabularyProvider = FutureProvider.family<List<VocabularyModel>, String>(
-  (ref, lessonId) =>
-      ref.watch(_vocabularyServiceProvider).getVocabularyForLesson(lessonId),
-);
+final _vocabularyProvider =
+    FutureProvider.family<List<VocabularyModel>, String>(
+      (ref, lessonId) => ref
+          .watch(_vocabularyServiceProvider)
+          .getVocabularyForLesson(lessonId),
+    );
 
 class VocabularyCardPage extends ConsumerStatefulWidget {
   final String lessonId;
@@ -72,9 +74,16 @@ class _VocabularyCardPageState extends ConsumerState<VocabularyCardPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.translate, size: 64, color: theme.colorScheme.outlineVariant),
+                  Icon(
+                    Icons.translate,
+                    size: 64,
+                    color: theme.colorScheme.outlineVariant,
+                  ),
                   const SizedBox(height: 12),
-                  Text('No vocabulary in this lesson', style: theme.textTheme.titleMedium),
+                  Text(
+                    'No vocabulary in this lesson',
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ],
               ),
             );
@@ -84,7 +93,9 @@ class _VocabularyCardPageState extends ConsumerState<VocabularyCardPage> {
               LinearProgressIndicator(
                 value: ((_currentPage + 1) / words.length),
                 backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
               ),
               Expanded(
                 child: PageView.builder(
@@ -117,11 +128,13 @@ class _VocabularyCardPageState extends ConsumerState<VocabularyCardPage> {
                       child: FilledButton(
                         onPressed: _currentPage < words.length - 1
                             ? () => _pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                )
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              )
                             : () => context.pop(),
-                        child: Text(_currentPage < words.length - 1 ? 'Next' : 'Finish'),
+                        child: Text(
+                          _currentPage < words.length - 1 ? 'Next' : 'Finish',
+                        ),
                       ),
                     ),
                   ],
@@ -135,12 +148,20 @@ class _VocabularyCardPageState extends ConsumerState<VocabularyCardPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 12),
-              Text('Failed to load vocabulary', style: theme.textTheme.titleMedium),
+              Text(
+                'Failed to load vocabulary',
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               FilledButton(
-                onPressed: () => ref.invalidate(_vocabularyProvider(widget.lessonId)),
+                onPressed: () =>
+                    ref.invalidate(_vocabularyProvider(widget.lessonId)),
                 child: const Text('Retry'),
               ),
             ],
@@ -173,75 +194,146 @@ class _VocabCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(),
-              Text(
-                vocab.word,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              if (vocab.pronunciation != null && vocab.pronunciation!.isNotEmpty)
-                Row(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    if (vocab.imageUrl?.trim().isNotEmpty ?? false) ...[
+                      _VocabularyImage(
+                        imageUrl: vocab.imageUrl!.trim(),
+                        semanticLabel: 'Illustration for ${vocab.word}',
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                     Text(
-                      vocab.pronunciation!,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
+                      vocab.word,
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(width: 8),
-                    IconButton.filledTonal(
-                      onPressed: onPlay,
-                      icon: Icon(
-                        isPlaying ? Icons.volume_up_rounded : Icons.volume_up_outlined,
+                    const SizedBox(height: 12),
+                    if (vocab.pronunciation != null &&
+                        vocab.pronunciation!.isNotEmpty)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            vocab.pronunciation!,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton.filledTonal(
+                            onPressed: onPlay,
+                            icon: Icon(
+                              isPlaying
+                                  ? Icons.volume_up_rounded
+                                  : Icons.volume_up_outlined,
+                            ),
+                            iconSize: 20,
+                          ),
+                        ],
+                      )
+                    else if (vocab.audioUrl != null &&
+                        vocab.audioUrl!.isNotEmpty)
+                      IconButton.filledTonal(
+                        onPressed: onPlay,
+                        icon: Icon(
+                          isPlaying
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_up_outlined,
+                        ),
                       ),
-                      iconSize: 20,
+                    const SizedBox(height: 24),
+                    Divider(color: theme.colorScheme.outlineVariant),
+                    const SizedBox(height: 16),
+                    Text(
+                      vocab.meaning,
+                      style: theme.textTheme.titleLarge,
+                      textAlign: TextAlign.center,
                     ),
+                    if (vocab.exampleSentence != null &&
+                        vocab.exampleSentence!.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '"${vocab.exampleSentence}"',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ],
-                )
-              else if (vocab.audioUrl != null && vocab.audioUrl!.isNotEmpty)
-                IconButton.filledTonal(
-                  onPressed: onPlay,
-                  icon: Icon(
-                    isPlaying ? Icons.volume_up_rounded : Icons.volume_up_outlined,
-                  ),
                 ),
-              const SizedBox(height: 24),
-              Divider(color: theme.colorScheme.outlineVariant),
-              const SizedBox(height: 16),
-              Text(
-                vocab.meaning,
-                style: theme.textTheme.titleLarge,
-                textAlign: TextAlign.center,
               ),
-              if (vocab.exampleSentence != null && vocab.exampleSentence!.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '"${vocab.exampleSentence}"',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontStyle: FontStyle.italic,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VocabularyImage extends StatelessWidget {
+  const _VocabularyImage({required this.imageUrl, required this.semanticLabel});
+
+  final String imageUrl;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Semantics(
+      image: true,
+      label: semanticLabel,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox.square(
+          dimension: 184,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.medium,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+
+              final expectedBytes = loadingProgress.expectedTotalBytes;
+              final progress = expectedBytes == null
+                  ? null
+                  : loadingProgress.cumulativeBytesLoaded / expectedBytes;
+
+              return ColoredBox(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Center(
+                  child: CircularProgressIndicator(value: progress),
                 ),
-              ],
-              const Spacer(),
-            ],
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => ColoredBox(
+              color: theme.colorScheme.surfaceContainerHighest,
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: 44,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       ),
