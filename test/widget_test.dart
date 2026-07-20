@@ -36,7 +36,7 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Welcome to PRM Learning'), findsWidgets);
   });
