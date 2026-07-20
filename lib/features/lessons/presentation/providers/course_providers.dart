@@ -6,40 +6,39 @@ import '../../domain/entities/unit.dart';
 import '../../domain/entities/lesson.dart';
 import 'lessons_providers.dart';
 
-class ActiveCourseNotifier extends StateNotifier<Course?> {
+class ActiveCourseNotifier extends StateNotifier<AsyncValue<Course?>> {
   final Ref _ref;
 
-  ActiveCourseNotifier(this._ref) : super(null) {
-    _init();
+  ActiveCourseNotifier(this._ref) : super(const AsyncValue<Course?>.loading()) {
+    reload();
   }
 
-  Future<void> _init() async {
+  Future<void> reload({bool refreshCourses = false}) async {
+    state = const AsyncValue<Course?>.loading();
     try {
+      if (refreshCourses) {
+        _ref.invalidate(coursesDataProvider);
+      }
       final prefs = await SharedPreferences.getInstance();
       final savedCourseId = prefs.getString('active_course_id');
-      
       final courses = await _ref.read(coursesDataProvider.future);
-      if (courses.isNotEmpty) {
-        if (savedCourseId != null) {
-          final index = courses.indexWhere((c) => c.id == savedCourseId);
-          state = index != -1 ? courses[index] : courses.first;
-        } else {
-          state = courses.first;
-        }
+      final Course? selectedCourse;
+      if (courses.isEmpty) {
+        selectedCourse = null;
+      } else if (savedCourseId != null) {
+        final index = courses.indexWhere((course) => course.id == savedCourseId);
+        selectedCourse = index == -1 ? courses.first : courses[index];
+      } else {
+        selectedCourse = courses.first;
       }
-    } catch (e) {
-      print('Error initializing active course: $e');
-      // Try fallback from cache/sync
-      _ref.read(coursesDataProvider).whenData((courses) {
-        if (courses.isNotEmpty && state == null) {
-          state = courses.first;
-        }
-      });
+      state = AsyncValue<Course?>.data(selectedCourse);
+    } catch (error, stackTrace) {
+      state = AsyncValue<Course?>.error(error, stackTrace);
     }
   }
 
   Future<void> setActiveCourse(Course course) async {
-    state = course;
+    state = AsyncValue<Course?>.data(course);
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('active_course_id', course.id);
@@ -49,9 +48,10 @@ class ActiveCourseNotifier extends StateNotifier<Course?> {
   }
 }
 
-final activeCourseProvider = StateNotifierProvider<ActiveCourseNotifier, Course?>((ref) {
-  return ActiveCourseNotifier(ref);
-});
+final activeCourseProvider =
+    StateNotifierProvider<ActiveCourseNotifier, AsyncValue<Course?>>((ref) {
+      return ActiveCourseNotifier(ref);
+    });
 
 final activeUnitProvider = StateProvider<String?>((ref) => null);
 
@@ -113,7 +113,7 @@ final isUnitUnlockedProvider = Provider.family<bool, Unit>((ref, unit) {
 });
 
 final isLessonUnlockedProvider = Provider.family<bool, Lesson>((ref, lesson) {
-  final activeCourse = ref.watch(activeCourseProvider);
+  final activeCourse = ref.watch(activeCourseProvider).asData?.value;
   if (activeCourse == null) return false;
 
   final unitsAsync = ref.watch(unitsDataProvider(activeCourse.id));

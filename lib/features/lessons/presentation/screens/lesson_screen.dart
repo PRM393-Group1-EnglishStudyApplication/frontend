@@ -24,6 +24,9 @@ class LessonScreen extends ConsumerStatefulWidget {
 }
 
 class _LessonScreenState extends ConsumerState<LessonScreen> {
+  final TextEditingController _answerController = TextEditingController();
+  final FocusNode _answerFocusNode = FocusNode();
+
   bool _isLearningVocab = true;
   int _currentVocabIndex = 0;
 
@@ -40,6 +43,13 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   bool _isSubmitting = false;
   bool _showResult = false;
   LessonSubmissionResult? _result;
+
+  @override
+  void dispose() {
+    _answerController.dispose();
+    _answerFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,10 +112,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   // Vocab Step
-  Widget _buildVocabStep(
-    BuildContext context,
-    List<Vocabulary> vocabulary,
-  ) {
+  Widget _buildVocabStep(BuildContext context, List<Vocabulary> vocabulary) {
     final theme = Theme.of(context);
     if (vocabulary.isEmpty) {
       return Center(
@@ -115,6 +122,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             const Text('Bài học này không có từ vựng.'),
             const SizedBox(height: 16),
             FilledButton(
+              key: const Key('lesson-start-exercises-button'),
               onPressed: () {
                 setState(() {
                   _isLearningVocab = false;
@@ -155,53 +163,62 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      vocab.word,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (vocab.imageUrl?.trim().isNotEmpty ?? false) ...[
+                        _VocabularyImage(
+                          imageUrl: vocab.imageUrl!.trim(),
+                          semanticLabel: 'Minh họa cho từ ${vocab.word}',
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      Text(
+                        vocab.word,
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                    ),
-                    Text(
-                      vocab.pronunciation,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
+                      Text(
+                        vocab.pronunciation,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
-                    ),
-                    const Divider(height: 40),
-                    Text(
-                      'Ý nghĩa',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
+                      const Divider(height: 40),
+                      Text(
+                        'Ý nghĩa',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vocab.meaning,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+                      Text(
+                        vocab.meaning,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Ví dụ',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
+                      const SizedBox(height: 24),
+                      Text(
+                        'Ví dụ',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vocab.exampleSentence,
-                      style: theme.textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        vocab.exampleSentence,
+                        style: theme.textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -221,6 +238,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
+                  key: const Key('lesson-vocabulary-action-button'),
                   onPressed: () {
                     if (_currentVocabIndex < vocabulary.length - 1) {
                       setState(() {
@@ -248,10 +266,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   }
 
   // Exercise Step
-  Widget _buildExerciseStep(
-    BuildContext context,
-    List<Exercise> exercises,
-  ) {
+  Widget _buildExerciseStep(BuildContext context, List<Exercise> exercises) {
     final theme = Theme.of(context);
     if (exercises.isEmpty) {
       return Center(
@@ -355,7 +370,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                 // Render Input based on type
                 if (exercise.exerciseType == 'multiple_choice')
                   _buildMultipleChoiceInput(theme, exercise.options)
-                else if (exercise.exerciseType == 'matching' && MatchingCodec.decodePairs(exercise.options).length >= 2)
+                else if (exercise.exerciseType == 'matching' &&
+                    MatchingCodec.decodePairs(exercise.options).length >= 2)
                   MatchingExercise(
                     key: ValueKey(exercise.id),
                     options: exercise.options,
@@ -381,6 +397,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         Padding(
           padding: const EdgeInsets.all(24.0),
           child: FilledButton(
+            key: const Key('lesson-action-button'),
             onPressed: _isActionEnabled()
                 ? () => _handleActionButton(exercises)
                 : null,
@@ -414,8 +431,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       final String userAnswer = exercise.exerciseType == 'multiple_choice'
           ? (_selectedOptionText ?? '')
           : exercise.exerciseType == 'matching'
-              ? (_matchingAnswer ?? '')
-              : _currentInputAnswer.trim();
+          ? (_matchingAnswer ?? '')
+          : _currentInputAnswer.trim();
 
       _userAnswers[exercise.id] = userAnswer;
 
@@ -457,6 +474,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     } else {
       // Continue to next or submit
       if (_currentExerciseIndex < exercises.length - 1) {
+        _answerController.clear();
+        _answerFocusNode.unfocus();
         setState(() {
           _currentExerciseIndex++;
           _isChecked = false;
@@ -532,6 +551,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   // Text Answer Input
   Widget _buildTextInput(ThemeData theme) {
     return TextField(
+      key: ValueKey('text-answer-${_currentExerciseIndex}'),
+      controller: _answerController,
+      focusNode: _answerFocusNode,
       enabled: !_isChecked,
       autofocus: true,
       onChanged: (val) {
@@ -769,6 +791,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           .markAsCompleted(widget.lesson.id);
       ref.invalidate(progressEntriesProvider);
       ref.invalidate(progressSummaryProvider);
+      ref.invalidate(learnedVocabularyCountProvider);
       await ref.read(completedLessonsProvider.notifier).reloadFromApi();
       await ref.read(currentUserProvider.notifier).loadUser();
       ref.invalidate(allAchievementsDataProvider);
@@ -875,6 +898,57 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _VocabularyImage extends StatelessWidget {
+  const _VocabularyImage({required this.imageUrl, required this.semanticLabel});
+
+  final String imageUrl;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Semantics(
+      image: true,
+      label: semanticLabel,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox.square(
+          dimension: 176,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.medium,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+
+              final expectedBytes = loadingProgress.expectedTotalBytes;
+              final progress = expectedBytes == null
+                  ? null
+                  : loadingProgress.cumulativeBytesLoaded / expectedBytes;
+
+              return ColoredBox(
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Center(
+                  child: CircularProgressIndicator(value: progress),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => ColoredBox(
+              color: theme.colorScheme.surfaceContainerHighest,
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: 44,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -12,4 +12,9 @@ class ProgressRepositoryImpl implements ProgressRepository {
     final models = await _remoteDataSource.getMyProgress();
     return List<ProgressEntry>.from(models);
   }
+
+  @override
+  Future<int> getLearnedVocabularyCount() {
+    return _remoteDataSource.getLearnedVocabularyCount();
+  }
 }
