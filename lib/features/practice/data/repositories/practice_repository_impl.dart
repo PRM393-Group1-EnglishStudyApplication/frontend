@@ -16,4 +16,16 @@ class PracticeRepositoryImpl implements PracticeRepository {
   Future<LessonSubmissionResult> submitPracticePack(List<Map<String, dynamic>> answers) {
     return _remoteDataSource.submitPracticePack(answers);
   }
+
+  @override
+  Future<WrongAnswerPack> getWrongAnswerPack() {
+    return _remoteDataSource.getWrongAnswerPack();
+  }
+
+  @override
+  Future<WrongAnswerReviewResult> submitWrongAnswerReview(
+    List<Map<String, dynamic>> answers,
+  ) {
+    return _remoteDataSource.submitWrongAnswerReview(answers);
+  }
 }

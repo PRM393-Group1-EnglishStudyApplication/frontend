@@ -25,6 +25,12 @@ final practicePackProvider =
   return repository.getPracticePack();
 });
 
+final wrongAnswerPackProvider =
+    FutureProvider.autoDispose<WrongAnswerPack>((Ref ref) async {
+  final repository = ref.watch(practiceRepositoryProvider);
+  return repository.getWrongAnswerPack();
+});
+
 final FutureProvider<int> completedLessonCountProvider =
     FutureProvider<int>((Ref ref) async {
   final summary = await ref.watch(progressSummaryProvider.future);

@@ -49,12 +49,56 @@ class _CoursePathScreenState extends ConsumerState<CoursePathScreen>
 
   @override
   Widget build(BuildContext context) {
-    final activeCourse = ref.watch(activeCourseProvider);
+    final activeCourseState = ref.watch(activeCourseProvider);
     final userAsync = ref.watch(currentUserProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    // If no active course is selected yet, show fallback to select course
+    if (activeCourseState.isLoading) {
+      return Scaffold(
+        backgroundColor: colors.surfaceContainerLowest,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (activeCourseState.hasError) {
+      return Scaffold(
+        backgroundColor: colors.surfaceContainerLowest,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cloud_off_rounded,
+                  size: 64,
+                  color: colors.error,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Không tải được danh sách khóa học.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => ref
+                      .read(activeCourseProvider.notifier)
+                      .reload(refreshCourses: true),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final activeCourse = activeCourseState.asData?.value;
+
+    // Only show this state after the course request completed successfully.
     if (activeCourse == null) {
       return Scaffold(
         backgroundColor: colors.surfaceContainerLowest,

@@ -7,6 +7,7 @@ class VocabularyModel extends Vocabulary {
     required super.meaning,
     required super.pronunciation,
     required super.exampleSentence,
+    super.imageUrl,
   });
 
   factory VocabularyModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +17,7 @@ class VocabularyModel extends Vocabulary {
       meaning: json['meaning'] as String? ?? '',
       pronunciation: json['pronunciation'] as String? ?? '',
       exampleSentence: json['example_sentence'] as String? ?? '',
+      imageUrl: (json['image_url'] ?? json['imageUrl']) as String?,
     );
   }
 }
@@ -45,6 +47,7 @@ class ExerciseModel extends Exercise {
     required super.question,
     required super.exerciseType,
     required super.correctAnswer,
+    super.lastUserAnswer,
     super.audioUrl,
     super.imageUrl,
     required List<ExerciseOptionModel> super.options,
@@ -58,9 +61,14 @@ class ExerciseModel extends Exercise {
       question: json['question'] as String? ?? '',
       exerciseType: json['exercise_type'] as String? ?? 'multiple_choice',
       correctAnswer: json['correct_answer'] as String? ?? '',
+      lastUserAnswer: json['last_user_answer'] as String?,
       audioUrl: json['audio_url'] as String?,
       imageUrl: json['image_url'] as String?,
-      options: opts.map((opt) => ExerciseOptionModel.fromJson(opt as Map<String, dynamic>)).toList(),
+      options: opts
+          .map(
+            (opt) => ExerciseOptionModel.fromJson(opt as Map<String, dynamic>),
+          )
+          .toList(),
     );
   }
 }
@@ -86,8 +94,12 @@ class LessonDetailModel extends LessonDetail {
       title: json['title'] as String? ?? '',
       orderIndex: (json['order_index'] as num?)?.toInt() ?? 1,
       xpReward: (json['xp_reward'] as num?)?.toInt() ?? 10,
-      vocabulary: vocabs.map((v) => VocabularyModel.fromJson(v as Map<String, dynamic>)).toList(),
-      exercises: exers.map((e) => ExerciseModel.fromJson(e as Map<String, dynamic>)).toList(),
+      vocabulary: vocabs
+          .map((v) => VocabularyModel.fromJson(v as Map<String, dynamic>))
+          .toList(),
+      exercises: exers
+          .map((e) => ExerciseModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
@@ -109,7 +121,44 @@ class LessonSubmissionResultModel extends LessonSubmissionResult {
       score: (json['score'] as num?)?.toInt() ?? 0,
       earnedXp: (json['earnedXp'] as num?)?.toInt() ?? 0,
       currentHearts: (json['currentHearts'] as num?)?.toInt() ?? 5,
-      unlockedAchievements: json['unlockedAchievements'] as List<dynamic>? ?? [],
+      unlockedAchievements:
+          json['unlockedAchievements'] as List<dynamic>? ?? [],
+    );
+  }
+}
+
+class WrongAnswerPackModel extends WrongAnswerPack {
+  const WrongAnswerPackModel({
+    required List<ExerciseModel> super.items,
+    required super.total,
+  });
+
+  factory WrongAnswerPackModel.fromJson(Map<String, dynamic> json) {
+    final items = json['items'] as List<dynamic>? ?? <dynamic>[];
+    return WrongAnswerPackModel(
+      items: items
+          .map((item) => ExerciseModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      total: (json['total'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class WrongAnswerReviewResultModel extends WrongAnswerReviewResult {
+  const WrongAnswerReviewResultModel({
+    required super.totalQuestions,
+    required super.correctAnswers,
+    required super.score,
+    required super.remainingWrongAnswers,
+  });
+
+  factory WrongAnswerReviewResultModel.fromJson(Map<String, dynamic> json) {
+    return WrongAnswerReviewResultModel(
+      totalQuestions: (json['totalQuestions'] as num?)?.toInt() ?? 0,
+      correctAnswers: (json['correctAnswers'] as num?)?.toInt() ?? 0,
+      score: (json['score'] as num?)?.toInt() ?? 0,
+      remainingWrongAnswers:
+          (json['remainingWrongAnswers'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -119,11 +168,7 @@ class ImportIssue {
   final String? field;
   final String message;
 
-  const ImportIssue({
-    this.row,
-    this.field,
-    required this.message,
-  });
+  const ImportIssue({this.row, this.field, required this.message});
 
   factory ImportIssue.fromJson(Map<String, dynamic> json) {
     return ImportIssue(
@@ -162,8 +207,12 @@ class ImportReportModel {
       totalRows: (json['totalRows'] as num?)?.toInt() ?? 0,
       validRows: (json['validRows'] as num?)?.toInt() ?? 0,
       inserted: (json['inserted'] as num?)?.toInt() ?? 0,
-      errors: errs.map((e) => ImportIssue.fromJson(e as Map<String, dynamic>)).toList(),
-      warnings: warns.map((w) => ImportIssue.fromJson(w as Map<String, dynamic>)).toList(),
+      errors: errs
+          .map((e) => ImportIssue.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      warnings: warns
+          .map((w) => ImportIssue.fromJson(w as Map<String, dynamic>))
+          .toList(),
       preview: prevs,
     );
   }
