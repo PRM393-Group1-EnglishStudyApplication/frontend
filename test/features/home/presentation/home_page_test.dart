@@ -11,6 +11,7 @@ import 'package:prm_frontend/features/home/presentation/home_page.dart';
 import 'package:prm_frontend/features/hearts/domain/entities/heart_status.dart';
 import 'package:prm_frontend/features/hearts/domain/repositories/heart_repository.dart';
 import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
+import 'package:prm_frontend/features/practice/presentation/screens/practice_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../mocks/mock_http_service.dart';
@@ -55,186 +56,259 @@ class MockDioInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final String path = options.path;
     if (path.endsWith('/api/courses')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': [
-            {
-              '_id': 'course_123',
-              'title': 'Vietnamese',
-              'description': 'Learn Vietnamese',
-              'target_level': 'beginner',
-            }
-          ],
-        },
-      ));
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': [
+              {
+                '_id': 'course_123',
+                'title': 'Vietnamese',
+                'description': 'Learn Vietnamese',
+                'target_level': 'beginner',
+              },
+            ],
+          },
+        ),
+      );
       return;
     }
-    if (path.contains('/api/courses/course_123/units') || path.endsWith('/units')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': [
-            {
-              '_id': 'unit_123',
-              'course_id': 'course_123',
-              'title': 'Unit 1',
-              'description': 'Basics – Greetings & Numbers',
-              'order_index': 1,
-            }
-          ],
-        },
-      ));
+    if (path.contains('/api/courses/course_123/units') ||
+        path.endsWith('/units')) {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': [
+              {
+                '_id': 'unit_123',
+                'course_id': 'course_123',
+                'title': 'Unit 1',
+                'description': 'Basics – Greetings & Numbers',
+                'order_index': 1,
+              },
+            ],
+          },
+        ),
+      );
       return;
     }
-    if (path.contains('/api/units/unit_123/lessons') || path.endsWith('/lessons')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': [
-            {
-              '_id': 'lesson_1',
-              'unit_id': 'unit_123',
-              'title': 'Basics 1',
-              'order_index': 1,
-              'xp_reward': 10,
-            },
-            {
-              '_id': 'lesson_2',
-              'unit_id': 'unit_123',
-              'title': 'Basics 2',
-              'order_index': 2,
-              'xp_reward': 10,
-            }
-          ],
-        },
-      ));
+    if (path.contains('/api/units/unit_123/lessons') ||
+        path.endsWith('/lessons')) {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': [
+              {
+                '_id': 'lesson_1',
+                'unit_id': 'unit_123',
+                'title': 'Basics 1',
+                'order_index': 1,
+                'xp_reward': 10,
+              },
+              {
+                '_id': 'lesson_2',
+                'unit_id': 'unit_123',
+                'title': 'Basics 2',
+                'order_index': 2,
+                'xp_reward': 10,
+              },
+            ],
+          },
+        ),
+      );
       return;
     }
     if (path.contains('/api/hearts/me')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': {
-            'user_id': 'user_123',
-            'current_hearts': 15,
-            'max_hearts': 15,
-            'seconds_until_next_refill': 600,
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': {
+              'user_id': 'user_123',
+              'current_hearts': 15,
+              'max_hearts': 15,
+              'seconds_until_next_refill': 600,
+            },
           },
-        },
-      ));
+        ),
+      );
+      return;
+    }
+    if (path.contains('/api/progress/me/vocabulary-count')) {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': <String, dynamic>{'count': 8},
+          },
+        ),
+      );
       return;
     }
     if (path.contains('/api/progress/me')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': [
-            {
-              '_id': 'progress_1',
-              'user_id': 'user_123',
-              'lesson_id': 'lesson_1',
-              'is_completed': true,
-              'score': 80,
-              'earned_xp': 10,
-              'completed_at': '2026-06-18T08:00:00.000Z',
-              'lesson': {
-                '_id': 'lesson_1',
-                'title': 'Basics 1',
-                'xp_reward': 10,
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': [
+              {
+                '_id': 'progress_1',
+                'user_id': 'user_123',
+                'lesson_id': 'lesson_1',
+                'is_completed': true,
+                'score': 80,
+                'earned_xp': 10,
+                'completed_at': '2026-06-18T08:00:00.000Z',
+                'lesson': {
+                  '_id': 'lesson_1',
+                  'title': 'Basics 1',
+                  'xp_reward': 10,
+                },
               },
-            }
-          ],
-        },
-      ));
+            ],
+          },
+        ),
+      );
+      return;
+    }
+    if (path.contains('/api/practice/wrong-answers')) {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': <String, dynamic>{
+              'items': <dynamic>[
+                <String, dynamic>{
+                  '_id': 'exercise_1',
+                  'lesson_id': 'lesson_1',
+                  'question': 'Choose the correct greeting.',
+                  'exercise_type': 'multiple_choice',
+                  'correct_answer': 'Hello',
+                  'last_user_answer': 'Goodbye',
+                  'options': <dynamic>[
+                    <String, dynamic>{
+                      '_id': 'option_1',
+                      'exercise_id': 'exercise_1',
+                      'option_text': 'Hello',
+                      'is_correct': true,
+                    },
+                    <String, dynamic>{
+                      '_id': 'option_2',
+                      'exercise_id': 'exercise_1',
+                      'option_text': 'Goodbye',
+                      'is_correct': false,
+                    },
+                  ],
+                },
+              ],
+              'total': 1,
+            },
+          },
+        ),
+      );
       return;
     }
     if (path.contains('/api/leaderboard/me')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': {
-            '_id': 'lb_1',
-            'user_id': 'user_123',
-            'week_start_date': '2026-06-15',
-            'xp': 450,
-            'rank_position': 1,
-          },
-        },
-      ));
-      return;
-    }
-    if (path.contains('/api/leaderboard')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': [
-            {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': {
               '_id': 'lb_1',
               'user_id': 'user_123',
               'week_start_date': '2026-06-15',
               'xp': 450,
               'rank_position': 1,
-              'user': {
-                '_id': 'user_123',
-                'full_name': 'Jane Doe',
-                'email': 'jane.doe@example.com',
-                'total_xp': 450,
-                'current_level': 'beginner',
-                'streak_count': 5,
-              }
             },
-            {
-              '_id': 'lb_2',
-              'user_id': 'user_456',
-              'week_start_date': '2026-06-15',
-              'xp': 300,
-              'rank_position': 2,
-              'user': {
-                '_id': 'user_456',
-                'full_name': 'John Doe',
-                'email': 'john.doe@example.com',
-                'total_xp': 300,
-                'current_level': 'beginner',
-                'streak_count': 2,
-              }
-            }
-          ],
-        },
-      ));
+          },
+        ),
+      );
       return;
     }
-    if (path.contains('/api/achievements/me') || path.contains('/api/achievements')) {
-      handler.resolve(Response<Map<String, dynamic>>(
-        requestOptions: options,
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'message': 'success',
-          'data': <dynamic>[],
-        },
-      ));
+    if (path.contains('/api/leaderboard')) {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': [
+              {
+                '_id': 'lb_1',
+                'user_id': 'user_123',
+                'week_start_date': '2026-06-15',
+                'xp': 450,
+                'rank_position': 1,
+                'user': {
+                  '_id': 'user_123',
+                  'full_name': 'Jane Doe',
+                  'email': 'jane.doe@example.com',
+                  'total_xp': 450,
+                  'current_level': 'beginner',
+                  'streak_count': 5,
+                },
+              },
+              {
+                '_id': 'lb_2',
+                'user_id': 'user_456',
+                'week_start_date': '2026-06-15',
+                'xp': 300,
+                'rank_position': 2,
+                'user': {
+                  '_id': 'user_456',
+                  'full_name': 'John Doe',
+                  'email': 'john.doe@example.com',
+                  'total_xp': 300,
+                  'current_level': 'beginner',
+                  'streak_count': 2,
+                },
+              },
+            ],
+          },
+        ),
+      );
+      return;
+    }
+    if (path.contains('/api/achievements/me') ||
+        path.contains('/api/achievements')) {
+      handler.resolve(
+        Response<Map<String, dynamic>>(
+          requestOptions: options,
+          statusCode: 200,
+          data: <String, dynamic>{
+            'success': true,
+            'message': 'success',
+            'data': <dynamic>[],
+          },
+        ),
+      );
       return;
     }
     handler.next(options);
@@ -270,7 +344,7 @@ void main() {
     });
     fakeAuthRepository = FakeAuthRepository()..user = testUser;
     fakeHeartRepository = FakeHeartRepository();
-    
+
     mockDio = Dio(
       BaseOptions(
         baseUrl: 'https://backend-6i8r.onrender.com',
@@ -309,7 +383,7 @@ void main() {
     }
   }
 
-  testWidgets('HomePage renders NavigationBar with four tabs', (
+  testWidgets('HomePage renders NavigationBar with five tabs', (
     WidgetTester tester,
   ) async {
     await pumpTestWidget(tester);
@@ -318,11 +392,12 @@ void main() {
     expect(navBarFinder, findsOneWidget);
 
     final navigationBar = tester.widget<NavigationBar>(navBarFinder);
-    expect(navigationBar.destinations.length, 4);
+    expect(navigationBar.destinations.length, 5);
 
     expect(find.text('Learn'), findsWidgets);
     expect(find.text('Practice'), findsWidgets);
     expect(find.text('Leaderboard'), findsWidgets);
+    expect(find.text('Lingua'), findsWidgets);
     expect(find.text('Profile'), findsWidgets);
   });
 
@@ -343,7 +418,10 @@ void main() {
     expect(find.text('50%'), findsOneWidget); // 1 of 2 lessons completed
 
     // Scroll down to bring daily quests card into view
-    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -350));
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -350),
+    );
     for (int i = 0; i < 3; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -373,7 +451,10 @@ void main() {
   ) async {
     await pumpTestWidget(tester);
 
-    await tester.tap(find.text('Practice'));
+    final navigationBar = tester.widget<NavigationBar>(
+      find.byType(NavigationBar),
+    );
+    navigationBar.onDestinationSelected!.call(1);
     for (int i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -384,12 +465,27 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    expect(find.byType(PracticeScreen), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -400));
+    await tester.pumpAndSettle();
     expect(find.text('Practice insights'), findsOneWidget);
+    expect(find.text('Từ vựng đã học'), findsOneWidget);
+    expect(find.text('Từ hồ sơ backend'), findsNothing);
+    expect(find.text('Từ /api/progress/me'), findsNothing);
     expect(find.text('Streak'), findsOneWidget);
     expect(find.text('Bai hoan thanh'), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -450));
     await tester.pumpAndSettle();
     expect(find.text('Can xem lai'), findsOneWidget);
+    expect(find.text('Xem các câu đã sai'), findsOneWidget);
+
+    await tester.tap(find.text('Xem các câu đã sai'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Các câu bạn đã làm sai'), findsOneWidget);
+    expect(find.text('Choose the correct greeting.'), findsOneWidget);
+    expect(find.textContaining('Goodbye'), findsOneWidget);
+    expect(find.textContaining('Hello'), findsOneWidget);
   });
 
   testWidgets('Tapping Profile tab displays profile card and sign-out button', (

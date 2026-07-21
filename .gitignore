@@ -50,3 +50,5 @@ app.*.map.json
 
 # Agent skills
 .agents
+# Backup .env tam khi chay local
+.env.backup-*

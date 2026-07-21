@@ -203,8 +203,13 @@ class HeartNotifier extends StateNotifier<HeartState> {
 
 final StateNotifierProvider<HeartNotifier, HeartState> heartProvider =
     StateNotifierProvider<HeartNotifier, HeartState>((Ref ref) {
+      // Only rebuild on sign-in/sign-out, not on Clerk's periodic token
+      // rotation — otherwise /api/hearts/me is refetched every ~60s.
+      final bool isSignedIn = ref.watch(
+        clerkTokenProvider.select((String? t) => t != null),
+      );
       return HeartNotifier(
         ref.watch(heartRepositoryProvider),
-        ref.watch(clerkTokenProvider),
+        isSignedIn ? ref.read(clerkTokenProvider) : null,
       );
     });

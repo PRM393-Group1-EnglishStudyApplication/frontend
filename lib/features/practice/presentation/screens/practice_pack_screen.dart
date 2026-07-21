@@ -13,14 +13,24 @@ import 'package:prm_frontend/features/lessons/presentation/widgets/out_of_hearts
 import 'package:prm_frontend/features/practice/presentation/providers/practice_providers.dart';
 import 'package:prm_frontend/features/progress/presentation/providers/progress_providers.dart';
 
+enum PracticeMode { random, wrongAnswers }
+
 class PracticePackScreen extends ConsumerStatefulWidget {
-  const PracticePackScreen({super.key});
+  final PracticeMode mode;
+
+  const PracticePackScreen({super.key, this.mode = PracticeMode.random});
+
+  const PracticePackScreen.wrongAnswers({super.key})
+    : mode = PracticeMode.wrongAnswers;
 
   @override
   ConsumerState<PracticePackScreen> createState() => _PracticePackScreenState();
 }
 
 class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
+  final TextEditingController _answerController = TextEditingController();
+  final FocusNode _answerFocusNode = FocusNode();
+
   int _currentExerciseIndex = 0;
   final Map<String, String> _userAnswers = {};
   String _currentInputAnswer = '';
@@ -33,15 +43,34 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   bool _isSubmitting = false;
   bool _showResult = false;
   LessonSubmissionResult? _result;
+  int? _remainingWrongAnswers;
+
+  bool get _isWrongAnswerReview => widget.mode == PracticeMode.wrongAnswers;
+
+  @override
+  void dispose() {
+    _answerController.dispose();
+    _answerFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final practicePackAsync = ref.watch(practicePackProvider);
+    final AsyncValue<List<Exercise>> practicePackAsync;
+    if (_isWrongAnswerReview) {
+      practicePackAsync = ref
+          .watch(wrongAnswerPackProvider)
+          .whenData((pack) => pack.items);
+    } else {
+      practicePackAsync = ref.watch(practicePackProvider);
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Luyện Tập Ngẫu Nhiên'),
+        title: Text(
+          _isWrongAnswerReview ? 'Luyện lại câu sai' : 'Luyện Tập Ngẫu Nhiên',
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
@@ -75,7 +104,7 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
               ),
               const SizedBox(height: 16),
               FilledButton.tonal(
-                onPressed: () => ref.invalidate(practicePackProvider),
+                onPressed: _refreshPack,
                 child: const Text('Thử lại'),
               ),
             ],
@@ -93,7 +122,11 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Ngân hàng câu hỏi hiện tại đang trống.'),
+            Text(
+              _isWrongAnswerReview
+                  ? 'Bạn không còn câu sai cần ôn lại.'
+                  : 'Ngân hàng câu hỏi hiện tại đang trống.',
+            ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -164,11 +197,15 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
                 // Display Question
                 Card(
                   elevation: 0,
-                  color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  color: theme.colorScheme.surfaceVariant.withValues(
+                    alpha: 0.3,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
                   child: Padding(
@@ -207,12 +244,17 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
 
         // Result check banner
         if (_isChecked) _buildCheckFeedbackBanner(theme, exercise),
+        if (_isChecked)
+          _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
 
         // Action button (Check / Continue)
         Padding(
           padding: const EdgeInsets.all(24.0),
           child: FilledButton(
-            onPressed: _isActionEnabled() ? () => _handleActionButton(exercises) : null,
+            key: const Key('practice-action-button'),
+            onPressed: _isActionEnabled()
+                ? () => _handleActionButton(exercises)
+                : null,
             child: Text(_isChecked ? 'Tiếp tục' : 'Kiểm tra'),
           ),
         ),
@@ -243,16 +285,21 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
       final String userAnswer = exercise.exerciseType == 'multiple_choice'
           ? (_selectedOptionText ?? '')
           : exercise.exerciseType == 'matching'
-              ? (_matchingAnswer ?? '')
-              : _currentInputAnswer.trim();
+          ? (_matchingAnswer ?? '')
+          : _currentInputAnswer.trim();
 
       _userAnswers[exercise.id] = userAnswer;
 
       // Check correctness
-      final isCorrect = userAnswer.toLowerCase().trim() == exercise.correctAnswer.toLowerCase().trim() ||
+      final isCorrect =
+          userAnswer.toLowerCase().trim() ==
+              exercise.correctAnswer.toLowerCase().trim() ||
           (exercise.exerciseType == 'multiple_choice' &&
               exercise.options.any(
-                (o) => o.optionText.toLowerCase().trim() == userAnswer.toLowerCase().trim() && o.isCorrect,
+                (o) =>
+                    o.optionText.toLowerCase().trim() ==
+                        userAnswer.toLowerCase().trim() &&
+                    o.isCorrect,
               ));
 
       setState(() {
@@ -260,10 +307,13 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
         _isAnswerCorrect = isCorrect;
       });
 
-      if (!isCorrect) {
-        final bool canContinue = await ref.read(heartProvider.notifier).deductHeartOnError();
+      if (!isCorrect && !_isWrongAnswerReview) {
+        final bool canContinue = await ref
+            .read(heartProvider.notifier)
+            .deductHeartOnError();
         if (!canContinue && mounted) {
-          final OutOfHeartsNoticeAction? action = await showOutOfHeartsNoticeSheet(context);
+          final OutOfHeartsNoticeAction? action =
+              await showOutOfHeartsNoticeSheet(context);
           if (!mounted) {
             return;
           }
@@ -276,6 +326,8 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
     } else {
       // Continue to next or submit
       if (_currentExerciseIndex < exercises.length - 1) {
+        _answerController.clear();
+        _answerFocusNode.unfocus();
         setState(() {
           _currentExerciseIndex++;
           _isChecked = false;
@@ -291,17 +343,24 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   }
 
   // Multiple choice options list
-  Widget _buildMultipleChoiceInput(ThemeData theme, List<ExerciseOption> options) {
+  Widget _buildMultipleChoiceInput(
+    ThemeData theme,
+    List<ExerciseOption> options,
+  ) {
     return Column(
       children: options.map((opt) {
         final isSelected = _selectedOptionText == opt.optionText;
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4) : theme.colorScheme.surface,
+            color: isSelected
+                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4)
+                : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -344,6 +403,9 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   // Text Answer Input
   Widget _buildTextInput(ThemeData theme) {
     return TextField(
+      key: ValueKey('text-answer-${_currentExerciseIndex}'),
+      controller: _answerController,
+      focusNode: _answerFocusNode,
       enabled: !_isChecked,
       autofocus: true,
       onChanged: (val) {
@@ -467,7 +529,9 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   Widget _buildResultStep(BuildContext context) {
     final theme = Theme.of(context);
     final res = _result!;
-    final success = res.score >= 70;
+    final success = _isWrongAnswerReview
+        ? (_remainingWrongAnswers ?? 0) == 0
+        : res.score >= 70;
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -482,7 +546,13 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            success ? 'Hoàn thành Luyện tập!' : 'Cố gắng lên nhé!',
+            _isWrongAnswerReview
+                ? success
+                      ? 'Bạn đã sửa hết câu sai!'
+                      : 'Đã hoàn thành lượt ôn!'
+                : success
+                ? 'Hoàn thành Luyện tập!'
+                : 'Cố gắng lên nhé!',
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -490,7 +560,11 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            success
+            _isWrongAnswerReview
+                ? success
+                      ? 'Các câu bạn vừa sửa đúng đã được loại khỏi danh sách cần ôn.'
+                      : 'Câu làm đúng đã được xóa; câu còn sai vẫn được giữ để bạn luyện tiếp.'
+                : success
                 ? 'Bạn đã hoàn thành xuất sắc bài luyện tập ngẫu nhiên!'
                 : 'Điểm số chưa đủ 70% để vượt qua bài luyện tập. Hãy rèn luyện thêm nhé!',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -527,8 +601,10 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
                   ),
                   _buildResultItem(
                     context,
-                    'Kinh nghiệm',
-                    '+${res.earnedXp} XP',
+                    _isWrongAnswerReview ? 'Còn lại' : 'Kinh nghiệm',
+                    _isWrongAnswerReview
+                        ? '${_remainingWrongAnswers ?? 0} câu'
+                        : '+${res.earnedXp} XP',
                     Colors.orange,
                   ),
                 ],
@@ -539,14 +615,24 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
 
           FilledButton(
             onPressed: () async {
+              if (_isWrongAnswerReview && (_remainingWrongAnswers ?? 0) > 0) {
+                _restartWrongAnswerReview();
+                return;
+              }
               await ref.read(currentUserProvider.notifier).loadUser();
-              await ref.read(heartProvider.notifier).loadHearts();
+              if (!_isWrongAnswerReview) {
+                await ref.read(heartProvider.notifier).loadHearts();
+              }
               if (!context.mounted) {
                 return;
               }
               Navigator.of(context).pop();
             },
-            child: const Text('Hoàn thành'),
+            child: Text(
+              _isWrongAnswerReview && (_remainingWrongAnswers ?? 0) > 0
+                  ? 'Luyện tiếp'
+                  : 'Hoàn thành',
+            ),
           ),
         ],
       ),
@@ -586,12 +672,38 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
       _isSubmitting = true;
     });
 
-    final List<Map<String, dynamic>> answersList = _userAnswers.entries.map((e) {
+    final List<Map<String, dynamic>> answersList = _userAnswers.entries.map((
+      e,
+    ) {
       return <String, dynamic>{'exerciseId': e.key, 'userAnswer': e.value};
     }).toList();
 
     try {
       final repository = ref.read(practiceRepositoryProvider);
+      if (_isWrongAnswerReview) {
+        final reviewResult = await repository.submitWrongAnswerReview(
+          answersList,
+        );
+        ref.invalidate(wrongAnswerPackProvider);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _result = LessonSubmissionResult(
+            totalQuestions: reviewResult.totalQuestions,
+            correctAnswers: reviewResult.correctAnswers,
+            score: reviewResult.score,
+            earnedXp: 0,
+            currentHearts: 0,
+            unlockedAchievements: const <dynamic>[],
+          );
+          _remainingWrongAnswers = reviewResult.remainingWrongAnswers;
+          _isSubmitting = false;
+          _showResult = true;
+        });
+        return;
+      }
+
       final res = await repository.submitPracticePack(answersList);
 
       await ref.read(heartProvider.notifier).loadHearts();
@@ -604,6 +716,9 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
       ref.invalidate(myLeaderboardProvider);
       ref.invalidate(leaderboardViewProvider);
 
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _result = res;
         _isSubmitting = false;
@@ -614,13 +729,42 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
         _showUnlockedAchievementsDialog(res.unlockedAchievements);
       }
     } catch (err) {
-      setState(() {
-        _isSubmitting = false;
-      });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi nộp bài làm: $err')));
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi nộp bài làm: $err')));
       }
     }
+  }
+
+  void _refreshPack() {
+    if (_isWrongAnswerReview) {
+      ref.invalidate(wrongAnswerPackProvider);
+    } else {
+      ref.invalidate(practicePackProvider);
+    }
+  }
+
+  void _restartWrongAnswerReview() {
+    _answerController.clear();
+    _answerFocusNode.unfocus();
+    ref.invalidate(wrongAnswerPackProvider);
+    setState(() {
+      _currentExerciseIndex = 0;
+      _userAnswers.clear();
+      _currentInputAnswer = '';
+      _selectedOptionText = null;
+      _matchingAnswer = null;
+      _isChecked = false;
+      _isAnswerCorrect = false;
+      _isSubmitting = false;
+      _showResult = false;
+      _result = null;
+      _remainingWrongAnswers = null;
+    });
   }
 
   void _showUnlockedAchievementsDialog(List<dynamic> achievements) {

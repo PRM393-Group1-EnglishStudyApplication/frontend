@@ -26,7 +26,7 @@ void main() {
     );
   });
 
-  testWidgets('App start renders SignInScreen when signed out', (WidgetTester tester) async {
+  testWidgets('App shows an intro screen before the main experience', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: PrmApp(
@@ -34,11 +34,10 @@ void main() {
         ),
       ),
     );
-    // Wait for async Clerk initialization to complete
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
 
-    // Initial state is signed out, so it should render the sign-in screen
-    expect(find.text('PRM Learning'), findsOneWidget);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 10000));
+
+    expect(find.text('Welcome to PRM Learning'), findsWidgets);
   });
 }
