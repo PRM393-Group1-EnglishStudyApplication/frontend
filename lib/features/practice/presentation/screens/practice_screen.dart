@@ -296,6 +296,7 @@ class PracticeScreen extends ConsumerWidget {
                   ),
                 );
               },
+            ),
             Card(
               elevation: 4,
               shadowColor: theme.colorScheme.secondary.withValues(alpha: 0.1),

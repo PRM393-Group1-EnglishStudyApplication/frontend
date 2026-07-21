@@ -244,8 +244,6 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
 
         // Result check banner
         if (_isChecked) _buildCheckFeedbackBanner(theme, exercise),
-        if (_isChecked)
-          _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
 
         // Action button (Check / Continue)
         Padding(
