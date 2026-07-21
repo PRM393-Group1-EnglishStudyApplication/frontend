@@ -459,17 +459,25 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    // Flashcards + Thach Dau 1v1 entry card day "Practice insights" xuong duoi man hinh ban dau
     expect(find.byType(PracticeScreen), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -400));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Practice insights'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Practice insights'), findsOneWidget);
     expect(find.text('Từ vựng đã học'), findsOneWidget);
     expect(find.text('Từ hồ sơ backend'), findsNothing);
     expect(find.text('Từ /api/progress/me'), findsNothing);
     expect(find.text('Streak'), findsOneWidget);
     expect(find.text('Bai hoan thanh'), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -450));
-    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Can xem lai'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Can xem lai'), findsOneWidget);
     expect(find.text('Xem các câu đã sai'), findsOneWidget);
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prm_frontend/core/utils/matching_codec.dart';
 import 'package:prm_frontend/features/achievements/presentation/providers/achievements_providers.dart';
 import 'package:prm_frontend/features/auth/presentation/providers/auth_providers.dart';
+import 'package:prm_frontend/features/explanations/presentation/widgets/ai_explanation_sheet.dart';
 import 'package:prm_frontend/features/hearts/presentation/providers/heart_providers.dart';
 import 'package:prm_frontend/features/leaderboard/presentation/providers/leaderboard_providers.dart';
 import 'package:prm_frontend/features/lessons/domain/entities/exercise_entities.dart';
@@ -242,8 +243,7 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
         ),
 
         // Result check banner
-        if (_isChecked)
-          _buildCheckFeedbackBanner(theme, exercise.correctAnswer),
+        if (_isChecked) _buildCheckFeedbackBanner(theme, exercise),
 
         // Action button (Check / Continue)
         Padding(
@@ -420,47 +420,73 @@ class _PracticePackScreenState extends ConsumerState<PracticePackScreen> {
   }
 
   // Visual Banner Feedback
-  Widget _buildCheckFeedbackBanner(ThemeData theme, String correctAnswer) {
+  Widget _buildCheckFeedbackBanner(ThemeData theme, Exercise exercise) {
     final isCorrect = _isAnswerCorrect;
     final color = isCorrect ? Colors.green : Colors.red;
+    // Dap an nguoi hoc vua gui luc bam Kiem tra (da luu trong _handleActionButton)
+    final String userAnswer = _userAnswers[exercise.id] ?? '';
+    // Requirement 2 v1 khong ho tro cau matching (prompt/dap an dang ma hoa cap - v2)
+    final bool canExplainWithAi =
+        !isCorrect && exercise.exerciseType != 'matching' && userAnswer.isNotEmpty;
+
     return Container(
       color: color.withValues(alpha: 0.1),
       padding: const EdgeInsets.all(16.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
-            color: color,
-            size: 28,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isCorrect ? 'Chính xác! Làm rất tốt!' : 'Sai mất rồi!',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    fontSize: 16,
-                  ),
-                ),
-                if (!isCorrect) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Đáp án đúng: $correctAnswer',
-                    style: TextStyle(
-                      color: color.withValues(alpha: 0.8),
-                      fontWeight: FontWeight.bold,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                color: color,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isCorrect ? 'Chính xác! Làm rất tốt!' : 'Sai mất rồi!',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
+                    if (!isCorrect) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Đáp án đúng: ${exercise.correctAnswer}',
+                        style: TextStyle(
+                          color: color.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (canExplainWithAi) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => showAiExplanationSheet(
+                  context,
+                  exerciseId: exercise.id,
+                  userAnswer: userAnswer,
+                ),
+                icon: const Text('🤖'),
+                label: const Text('Giải thích với AI'),
+              ),
+            ),
+          ],
         ],
       ),
     );
