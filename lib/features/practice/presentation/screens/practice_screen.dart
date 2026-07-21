@@ -8,6 +8,8 @@ import '../../../multiplayer/presentation/screens/multiplayer_lobby_screen.dart'
 import '../../../progress/presentation/providers/progress_providers.dart';
 import '../providers/practice_providers.dart';
 import 'practice_pack_screen.dart';
+import 'package:prm_frontend/features/flashcards/presentation/providers/flashcard_providers.dart';
+import 'package:prm_frontend/features/flashcards/presentation/screens/flashcard_home_screen.dart';
 
 class PracticeScreen extends ConsumerWidget {
   const PracticeScreen({super.key});
@@ -192,6 +194,108 @@ class PracticeScreen extends ConsumerWidget {
               },
             ),
             const SizedBox(height: 16),
+            Consumer(
+              builder: (context, ref, child) {
+                final dueCountAsync = ref.watch(dueCountProvider);
+                final int dueCount = dueCountAsync.maybeWhen(data: (value) => value, orElse: () => 0);
+
+                return Card(
+                  elevation: 4,
+                  shadowColor: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.colorScheme.tertiaryContainer.withValues(alpha: 0.6),
+                          theme.colorScheme.surface,
+                        ],
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.style_rounded,
+                                color: theme.colorScheme.tertiary,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Flashcards',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onTertiaryContainer,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    dueCount > 0
+                                        ? '$dueCount từ cần ôn hôm nay'
+                                        : 'Ôn từ vựng đã học bằng thẻ lật',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (dueCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.tertiary,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '$dueCount',
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.onTertiary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (context) => const FlashcardHomeScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.style_rounded),
+                          label: const Text('Ôn Flashcards'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             Card(
               elevation: 4,
               shadowColor: theme.colorScheme.secondary.withValues(alpha: 0.1),

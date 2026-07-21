@@ -459,6 +459,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    // Flashcards entry card them phia tren day so voi "Practice insights" xuong duoi man hinh ban dau
+    await tester.scrollUntilVisible(
+      find.text('Practice insights'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.byType(PracticeScreen), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -400));
     await tester.pumpAndSettle();
